@@ -8,7 +8,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'engineer' // По умолчанию роль "инженер"
+    role: 'engineer'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,7 @@ const Register = () => {
     }
 
     try {
+      console.log('Отправка данных:', { username, email, password, role });
       const res = await api.post('/auth/register', {
         username,
         email,
@@ -47,6 +48,7 @@ const Register = () => {
       // Перенаправление на главную страницу
       navigate('/');
     } catch (err) {
+      console.error('Ошибка регистрации:', err);
       setError(
         err.response?.data?.message || 
         'Произошла ошибка при регистрации. Пожалуйста, попробуйте снова.'

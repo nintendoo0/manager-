@@ -7,10 +7,16 @@ require('dotenv').config();
 
 const app = express();
 
+// В начало файла добавьте:
+require('./database/migrations/init');
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000', // URL вашего фронтенда
+  credentials: true
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 
@@ -47,3 +53,19 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 module.exports = app;
+
+// Проверьте, что маршруты правильно импортированы
+const authRoutes = require('./routes/auth');
+const projectRoutes = require('./routes/project');
+const defectRoutes = require('./routes/defect');
+
+// И правильно подключены к приложению
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/defects', defectRoutes);
+
+// Добавьте это в начало файла после импортов
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});

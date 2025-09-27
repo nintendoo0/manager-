@@ -1,42 +1,68 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+
+// Секретный ключ для JWT из переменных окружения
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Регистрация пользователя
 exports.register = async (req, res) => {
   try {
+    console.log('Запрос на регистрацию:', req.body);
     const { username, email, password, role } = req.body;
-
-    // Проверка существования пользователя
-    const userExists = await db.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (userExists.rows.length > 0) {
-      return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+    
+    // Проверка на пустые поля
+    if (!username || !email || !password || !role) {
+      return res.status(400).json({ 
+        message: 'Все поля должны быть заполнены' 
+      });
     }
-
+    
+    // Проверка существования пользователя
+    const existingUser = await db.query(
+      'SELECT * FROM users WHERE email = $1 OR username = $2', 
+      [email, username]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ 
+        message: 'Пользователь с таким email или именем уже существует' 
+      });
+    }
+    
     // Хеширование пароля
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Добавление пользователя
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Создание пользователя
     const result = await db.query(
       'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role',
-      [username, email, hashedPassword, role || 'engineer']
+      [username, email, hashedPassword, role]
     );
-
-    // Генерация токена
+    
+    // Создание JWT токена
     const token = jwt.sign(
       { id: result.rows[0].id, role: result.rows[0].role },
       SECRET_KEY,
       { expiresIn: '24h' }
     );
-
+    
     res.status(201).json({
       message: 'Пользователь успешно зарегистрирован',
       token,
-      user: result.rows[0]
+      user: {
+        id: result.rows[0].id,
+        username: result.rows[0].username,
+        email: result.rows[0].email,
+        role: result.rows[0].role
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Ошибка сервера при регистрации', error: error.message });
+    console.error('Ошибка при регистрации:', error);
+    res.status(500).json({ 
+      message: 'Произошла ошибка при регистрации. Пожалуйста, попробуйте снова.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -44,28 +70,28 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     // Поиск пользователя
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {
       return res.status(401).json({ message: 'Неверный email или пароль' });
     }
-
+    
     const user = result.rows[0];
-
+    
     // Проверка пароля
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Неверный email или пароль' });
     }
-
+    
     // Создание токена
     const token = jwt.sign(
       { id: user.id, role: user.role },
       SECRET_KEY,
       { expiresIn: '24h' }
     );
-
+    
     res.json({
       message: 'Авторизация успешна',
       token,
