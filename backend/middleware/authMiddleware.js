@@ -24,3 +24,29 @@ function authorizeRoles(...allowedRoles) {
 }
 
 module.exports = { authenticateToken, authorizeRoles };
+
+// Middleware для проверки ролей
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: 'У вас нет прав для выполнения этого действия'
+      });
+    }
+    next();
+  };
+};
+
+// Защита от XSS
+exports.sanitizeInput = (req, res, next) => {
+  if (req.body) {
+    Object.keys(req.body).forEach(key => {
+      if (typeof req.body[key] === 'string') {
+        req.body[key] = req.body[key]
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+    });
+  }
+  next();
+};
