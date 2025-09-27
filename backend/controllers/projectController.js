@@ -17,10 +17,12 @@ exports.createProject = async (req, res) => {
   }
 };
 
-// Получение всех проектов
+// Функция получения всех проектов
 exports.getAllProjects = async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM projects ORDER BY created_at DESC');
+    
+    // Убедитесь, что возвращается массив
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Ошибка при получении проектов:', error);
