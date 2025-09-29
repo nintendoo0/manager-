@@ -1,99 +1,264 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
+import api from '../../utils/api';
+import './Defects.css';
 
 const DefectList = () => {
   const { projectId } = useParams();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  
   const [defects, setDefects] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Фильтры
   const [filters, setFilters] = useState({
-    status: '',
-    priority: '',
-    assigned_to: ''
+    status: queryParams.get('status') || '',
+    priority: queryParams.get('priority') || '',
+    project_id: projectId || queryParams.get('project_id') || '',
+    search: queryParams.get('search') || '',
   });
+  
+  // Метаданные о проекте, если отображаем дефекты конкретного проекта
+  const [currentProject, setCurrentProject] = useState(null);
 
   useEffect(() => {
-    const fetchDefects = async () => {
+    const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const params = { ...filters };
-        if (projectId) params.project_id = projectId;
+        setLoading(true);
         
-        const response = await axios.get('/api/defects', {
-          headers: { Authorization: `Bearer ${token}` },
-          params
-        });
+        // Загружаем список проектов для фильтрации
+        if (!projectId) {
+          const projectsRes = await api.get('/projects');
+          setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
+        } else {
+          // Если показываем дефекты конкретного проекта, получаем информацию о нем
+          const projectRes = await api.get(`/projects/${projectId}`);
+          setCurrentProject(projectRes.data);
+        }
         
-        setDefects(response.data);
-        setLoading(false);
+        // Формируем параметры запроса
+        const queryParams = {};
+        if (filters.status) queryParams.status = filters.status;
+        if (filters.priority) queryParams.priority = filters.priority;
+        if (filters.project_id) queryParams.project_id = filters.project_id;
+        
+        // Получаем дефекты с учетом фильтров
+        const defectsRes = await api.get('/defects', { params: queryParams });
+        setDefects(Array.isArray(defectsRes.data) ? defectsRes.data : []);
+        
+        setError(null);
       } catch (err) {
-        setError('Ошибка при загрузке дефектов');
+        console.error('Ошибка при загрузке данных:', err);
+        setError('Не удалось загрузить дефекты. Пожалуйста, попробуйте позже.');
+        setDefects([]);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchDefects();
-  }, [projectId, filters]);
+    fetchData();
+  }, [projectId, filters.status, filters.priority, filters.project_id]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  if (loading) return <div>Загрузка дефектов...</div>;
-  if (error) return <div>{error}</div>;
+  const resetFilters = () => {
+    setFilters({
+      status: '',
+      priority: '',
+      project_id: projectId || '',
+      search: '',
+    });
+  };
+
+  // Фильтрация дефектов по тексту поиска
+  const filteredDefects = defects.filter(defect => {
+    if (!filters.search) return true;
+    
+    const searchLower = filters.search.toLowerCase();
+    return defect.title.toLowerCase().includes(searchLower) || 
+           (defect.description && defect.description.toLowerCase().includes(searchLower));
+  });
+
+  const getPriorityLabel = (priority) => {
+    switch(priority) {
+      case 'high': return 'Высокий';
+      case 'medium': return 'Средний';
+      case 'low': return 'Низкий';
+      default: return 'Неизвестно';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch(status) {
+      case 'new': return 'Новый';
+      case 'in_progress': return 'В работе';
+      case 'review': return 'На проверке';
+      case 'closed': return 'Закрыт';
+      case 'cancelled': return 'Отменен';
+      default: return 'Неизвестно';
+    }
+  };
 
   return (
-    <div className="defect-list">
-      <h2>Дефекты {projectId ? 'проекта' : ''}</h2>
-      <Link to={projectId ? `/projects/${projectId}/defects/new` : "/defects/new"} className="btn btn-primary">
-        Новый дефект
-      </Link>
-      
-      <div className="filters">
-        <select name="status" value={filters.status} onChange={handleFilterChange}>
-          <option value="">Все статусы</option>
-          <option value="new">Новый</option>
-          <option value="in_progress">В работе</option>
-          <option value="review">На проверке</option>
-          <option value="closed">Закрыт</option>
-          <option value="cancelled">Отменен</option>
-        </select>
-        
-        <select name="priority" value={filters.priority} onChange={handleFilterChange}>
-          <option value="">Все приоритеты</option>
-          <option value="high">Высокий</option>
-          <option value="medium">Средний</option>
-          <option value="low">Низкий</option>
-        </select>
+    <div className="defect-list-container">
+      <div className="defect-list-header">
+        <h2>
+          {projectId ? 
+            `Дефекты проекта "${currentProject?.name || ''}"` : 
+            'Все дефекты'
+          }
+        </h2>
+        <Link 
+          to={projectId ? `/projects/${projectId}/defects/new` : '/defects/new'}
+          className="btn btn-primary"
+        >
+          Новый дефект
+        </Link>
       </div>
       
-      <div className="defects">
-        {defects.length === 0 ? (
-          <p>Дефекты не найдены</p>
-        ) : (
-          defects.map(defect => (
+      <div className="defect-filters">
+        <div className="filters-row">
+          <div className="filter-item">
+            <label htmlFor="status">Статус:</label>
+            <select 
+              id="status" 
+              name="status" 
+              value={filters.status} 
+              onChange={handleFilterChange}
+            >
+              <option value="">Все</option>
+              <option value="new">Новые</option>
+              <option value="in_progress">В работе</option>
+              <option value="review">На проверке</option>
+              <option value="closed">Закрытые</option>
+              <option value="cancelled">Отмененные</option>
+            </select>
+          </div>
+          
+          <div className="filter-item">
+            <label htmlFor="priority">Приоритет:</label>
+            <select 
+              id="priority" 
+              name="priority" 
+              value={filters.priority} 
+              onChange={handleFilterChange}
+            >
+              <option value="">Все</option>
+              <option value="high">Высокий</option>
+              <option value="medium">Средний</option>
+              <option value="low">Низкий</option>
+            </select>
+          </div>
+          
+          {!projectId && (
+            <div className="filter-item">
+              <label htmlFor="project_id">Проект:</label>
+              <select 
+                id="project_id" 
+                name="project_id" 
+                value={filters.project_id} 
+                onChange={handleFilterChange}
+              >
+                <option value="">Все проекты</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          <div className="filter-item search-item">
+            <label htmlFor="search">Поиск:</label>
+            <input
+              type="text"
+              id="search"
+              name="search"
+              value={filters.search}
+              onChange={handleFilterChange}
+              placeholder="Поиск по названию и описанию"
+            />
+          </div>
+          
+          <button onClick={resetFilters} className="btn btn-secondary">
+            Сбросить
+          </button>
+        </div>
+      </div>
+      
+      {loading ? (
+        <div className="loading">Загрузка дефектов...</div>
+      ) : error ? (
+        <div className="error-message">{error}</div>
+      ) : filteredDefects.length === 0 ? (
+        <div className="no-data">
+          <p>Дефекты не найдены. {!projectId && 'Выберите другие параметры фильтрации или'} создайте новый дефект.</p>
+        </div>
+      ) : (
+        <div className="defect-cards">
+          {filteredDefects.map(defect => (
             <div key={defect.id} className="defect-card">
-              <h3><Link to={`/defects/${defect.id}`}>{defect.title}</Link></h3>
+              <h3>
+                <Link to={`/defects/${defect.id}`}>{defect.title}</Link>
+              </h3>
+              
               <div className="defect-meta">
-                <span className={`priority priority-${defect.priority}`}>
-                  {defect.priority}
+                <span className={`defect-priority priority-${defect.priority}`}>
+                  {getPriorityLabel(defect.priority)}
                 </span>
-                <span className={`status status-${defect.status}`}>
-                  {defect.status}
+                <span className={`defect-status status-${defect.status}`}>
+                  {getStatusLabel(defect.status)}
                 </span>
               </div>
-              <p>{defect.description.substring(0, 100)}...</p>
-              {defect.deadline && (
-                <div className="deadline">
-                  Срок: {new Date(defect.deadline).toLocaleDateString()}
+              
+              {defect.project_name && !projectId && (
+                <div className="defect-project">
+                  <span className="meta-label">Проект:</span>
+                  <Link to={`/projects/${defect.project_id}`}>{defect.project_name}</Link>
                 </div>
               )}
+              
+              {defect.assigned_to_name && (
+                <div className="defect-assigned">
+                  <span className="meta-label">Исполнитель:</span>
+                  <span>{defect.assigned_to_name}</span>
+                </div>
+              )}
+              
+              {defect.description && (
+                <div className="defect-description-preview">
+                  {defect.description.length > 150
+                    ? `${defect.description.substring(0, 150)}...`
+                    : defect.description}
+                </div>
+              )}
+              
+              <div className="defect-footer">
+                <div className="defect-dates">
+                  <span className="defect-created">
+                    {new Date(defect.created_at).toLocaleDateString()}
+                  </span>
+                  {defect.deadline && (
+                    <span className="defect-deadline">
+                      До: {new Date(defect.deadline).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <Link to={`/defects/${defect.id}`} className="btn btn-info btn-sm">
+                  Подробнее
+                </Link>
+              </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

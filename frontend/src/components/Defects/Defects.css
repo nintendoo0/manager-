@@ -1,0 +1,336 @@
+/* Общие стили для дефектов */
+.defect-list-container, 
+.defect-detail-container,
+.defect-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Заголовок и действия */
+.defect-list-header,
+.defect-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Фильтры */
+.defect-filters {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-item label {
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.filter-item select,
+.filter-item input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+.search-item input {
+  min-width: 250px;
+}
+
+/* Список дефектов */
+.defect-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.defect-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.defect-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.defect-card h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.2rem;
+}
+
+.defect-card h3 a {
+  color: #333;
+  text-decoration: none;
+}
+
+.defect-card h3 a:hover {
+  color: #4a90e2;
+}
+
+.defect-meta {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.defect-priority,
+.defect-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.priority-high {
+  background-color: #ffebee;
+  color: #b71c1c;
+}
+
+.priority-medium {
+  background-color: #fff8e1;
+  color: #ff6f00;
+}
+
+.priority-low {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.status-new {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+.status-in_progress {
+  background-color: #fff8e1;
+  color: #ff6f00;
+}
+
+.status-review {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.status-closed {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.status-cancelled {
+  background-color: #ffebee;
+  color: #b71c1c;
+}
+
+.defect-project,
+.defect-assigned {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.meta-label {
+  font-weight: 500;
+  margin-right: 0.3rem;
+}
+
+.defect-description-preview {
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+  color: #555;
+  flex-grow: 1;
+}
+
+.defect-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+}
+
+.defect-dates {
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  gap: 1rem;
+}
+
+.defect-deadline {
+  color: #e91e63;
+}
+
+/* Детальный просмотр дефекта */
+.defect-detail-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.defect-meta-info {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.defect-description {
+  margin-bottom: 2rem;
+}
+
+.defect-description h3,
+.defect-comments h3 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.description-content {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.description-content pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+}
+
+/* Комментарии */
+.defect-comments {
+  margin-top: 2rem;
+}
+
+.comments-list {
+  margin-bottom: 1.5rem;
+}
+
+.comment {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.comment-author {
+  font-weight: 500;
+}
+
+.comment-date {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.comment-content {
+  white-space: pre-wrap;
+}
+
+.add-comment {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Форма дефекта */
+.defect-form-container h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.defect-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.defect-form .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.defect-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.defect-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.defect-form input,
+.defect-form select,
+.defect-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.defect-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Утилиты */
+.loading, .error-message, .no-data {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  color: #721c24;
+  background-color: #f8d7da;
+}
+
+.no-data {
+  color: #555;
+}

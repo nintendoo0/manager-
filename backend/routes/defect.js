@@ -1,17 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const defectController = require('../controllers/defectController');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
-// Временная заглушка для маршрутов дефектов
-router.get('/', (req, res) => {
-  res.status(200).json({ message: 'Список дефектов работает' });
-});
+router.use(authenticateToken);
 
-router.post('/', (req, res) => {
-  res.status(201).json({ message: 'Создание дефекта работает' });
-});
-
-router.get('/:id', (req, res) => {
-  res.status(200).json({ message: `Получение дефекта ${req.params.id} работает` });
-});
+router.get('/', defectController.getDefects);
+router.post('/', defectController.createDefect);
+router.get('/:id', defectController.getDefect);
+router.put('/:id', defectController.updateDefect);
+router.delete('/:id', defectController.deleteDefect);
 
 module.exports = router;

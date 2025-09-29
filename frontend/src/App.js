@@ -6,6 +6,8 @@ import ProjectList from './components/Projects/ProjectList';
 import ProjectDetail from './components/Projects/ProjectDetail';
 import ProjectForm from './components/Projects/ProjectForm';
 import DefectList from './components/Defects/DefectList';
+import DefectForm from './components/Defects/DefectForm';
+import DefectDetail from './components/Defects/DefectDetail';
 import Navbar from './components/layout/Navbar';
 import './App.css';
 
@@ -66,19 +68,27 @@ function App() {
           {/* Маршруты дефектов */}
           <Route 
             path="/defects" 
-            element={
-              <PrivateRoute>
-                <DefectList />
-              </PrivateRoute>
-            } 
+            element={<PrivateRoute><DefectList /></PrivateRoute>} 
+          />
+          <Route 
+            path="/defects/new" 
+            element={<PrivateRoute><DefectForm /></PrivateRoute>} 
+          />
+          <Route 
+            path="/defects/:id" 
+            element={<PrivateRoute><DefectDetail /></PrivateRoute>} 
+          />
+          <Route 
+            path="/defects/:id/edit" 
+            element={<PrivateRoute><DefectForm /></PrivateRoute>} 
           />
           <Route 
             path="/projects/:projectId/defects" 
-            element={
-              <PrivateRoute>
-                <DefectList />
-              </PrivateRoute>
-            } 
+            element={<PrivateRoute><DefectList /></PrivateRoute>} 
+          />
+          <Route 
+            path="/projects/:projectId/defects/new" 
+            element={<PrivateRoute><DefectForm /></PrivateRoute>} 
           />
         </Routes>
       </div>
