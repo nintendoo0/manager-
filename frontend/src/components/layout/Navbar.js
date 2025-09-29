@@ -1,26 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    // Проверяем наличие пользователя при загрузке
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-  
-  const logout = () => {
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setUser(null);
     navigate('/login');
   };
-  
+
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -33,7 +26,7 @@ const Navbar = () => {
             <Link to="/projects" className="navbar-link">Проекты</Link>
           </li>
           <li className="navbar-item">
-            <Link to="/defects" className="navbar-link">Все дефекты</Link>
+            <Link to="/defects" className="navbar-link">Дефекты</Link>
           </li>
           {user && (user.role === 'manager' || user.role === 'admin') && (
             <li className="navbar-item">
@@ -42,24 +35,35 @@ const Navbar = () => {
           )}
         </ul>
         
-        <div className="navbar-user">
-          {user && (
-            <>
-              <span className="user-greeting">
-                Привет, {user.username}!
-              </span>
-              <div className="user-dropdown">
-                <button className="user-dropdown-btn">
-                  <i className="fas fa-user-circle"></i>
-                </button>
-                <div className="dropdown-content">
-                  <Link to="/profile">Мой профиль</Link>
-                  <button onClick={logout}>Выйти</button>
-                </div>
+        {user && (
+          <div className="navbar-user">
+            <div 
+              className="user-profile-container" 
+              onClick={() => setShowDropdown(!showDropdown)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
+              tabIndex="0"
+            >
+              <div className="user-avatar">
+                {user.username ? user.username.charAt(0).toUpperCase() : 'У'}
               </div>
-            </>
-          )}
-        </div>
+              <span className="user-name">{user.username}</span>
+              <i className={`fa fa-chevron-down ${showDropdown ? 'rotate' : ''}`}></i>
+              
+              {showDropdown && (
+                <div className="user-dropdown">
+                  <Link to="/profile" className="dropdown-item">
+                    <i className="fas fa-user"></i> Мой профиль
+                  </Link>
+                  <hr className="dropdown-divider" />
+                  <button onClick={handleLogout} className="dropdown-item logout-button">
+                    <i className="fas fa-sign-out-alt"></i> Выйти
+                  </button>
+                </div>
+              )}
+            </div>
+            
+          </div>
+        )}
       </div>
     </nav>
   );

@@ -2,12 +2,13 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import Profile from './components/Auth/Profile';
 import ProjectList from './components/Projects/ProjectList';
 import ProjectDetail from './components/Projects/ProjectDetail';
 import ProjectForm from './components/Projects/ProjectForm';
 import DefectList from './components/Defects/DefectList';
-import DefectForm from './components/Defects/DefectForm';
 import DefectDetail from './components/Defects/DefectDetail';
+import DefectForm from './components/Defects/DefectForm';
 import Navbar from './components/layout/Navbar';
 import './App.css';
 
@@ -39,6 +40,16 @@ function App() {
             } 
           />
           
+          {/* Профиль */}
+          <Route 
+            path="/profile" 
+            element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            } 
+          />
+          
           {/* Маршруты проектов */}
           <Route 
             path="/projects" 
@@ -64,31 +75,63 @@ function App() {
               </PrivateRoute>
             } 
           />
+          <Route 
+            path="/projects/:id/edit" 
+            element={
+              <PrivateRoute>
+                <ProjectForm />
+              </PrivateRoute>
+            } 
+          />
           
           {/* Маршруты дефектов */}
           <Route 
             path="/defects" 
-            element={<PrivateRoute><DefectList /></PrivateRoute>} 
+            element={
+              <PrivateRoute>
+                <DefectList />
+              </PrivateRoute>
+            } 
           />
           <Route 
             path="/defects/new" 
-            element={<PrivateRoute><DefectForm /></PrivateRoute>} 
+            element={
+              <PrivateRoute>
+                <DefectForm />
+              </PrivateRoute>
+            } 
           />
           <Route 
             path="/defects/:id" 
-            element={<PrivateRoute><DefectDetail /></PrivateRoute>} 
+            element={
+              <PrivateRoute>
+                <DefectDetail />
+              </PrivateRoute>
+            } 
           />
           <Route 
             path="/defects/:id/edit" 
-            element={<PrivateRoute><DefectForm /></PrivateRoute>} 
+            element={
+              <PrivateRoute>
+                <DefectForm />
+              </PrivateRoute>
+            } 
           />
           <Route 
             path="/projects/:projectId/defects" 
-            element={<PrivateRoute><DefectList /></PrivateRoute>} 
+            element={
+              <PrivateRoute>
+                <DefectList />
+              </PrivateRoute>
+            } 
           />
           <Route 
             path="/projects/:projectId/defects/new" 
-            element={<PrivateRoute><DefectForm /></PrivateRoute>} 
+            element={
+              <PrivateRoute>
+                <DefectForm />
+              </PrivateRoute>
+            } 
           />
         </Routes>
       </div>
