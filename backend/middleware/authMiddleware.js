@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 
+// Middleware для проверки токена
 function authenticateToken(req, res, next) {
-  // Получаем токен из заголовка
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
   
@@ -10,53 +10,34 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ message: 'Требуется авторизация' });
   }
   
-  // Проверяем токен
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) {
-      console.error('Ошибка проверки токена:', err);
       return res.status(403).json({ message: 'Недействительный или просроченный токен' });
     }
     
-    // Добавляем данные пользователя в объект запроса
-    req.user = user;
+    req.user = user; // Сохраняем данные пользователя в запросе
     next();
   });
 }
 
-function authorizeRoles(...allowedRoles) {
-  return (req, res, next) => {
-    if (!req.user) return res.sendStatus(401);
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Доступ запрещён' });
-    }
-    next();
-  };
-}
-
-module.exports = { authenticateToken, authorizeRoles };
-
-// Middleware для проверки ролей
-exports.restrictTo = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: 'У вас нет прав для выполнения этого действия'
-      });
-    }
-    next();
-  };
-};
-
-// Защита от XSS
-exports.sanitizeInput = (req, res, next) => {
-  if (req.body) {
-    Object.keys(req.body).forEach(key => {
-      if (typeof req.body[key] === 'string') {
-        req.body[key] = req.body[key]
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      }
-    });
+// Middleware для проверки роли admin
+function requireAdmin(req, res, next) {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Доступ запрещен. Требуется роль администратора.' });
   }
   next();
+}
+
+// Middleware для проверки прав на создание дефектов (разрешено admin и engineer)
+function canCreateDefects(req, res, next) {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'engineer')) {
+    return res.status(403).json({ message: 'Доступ запрещен. Недостаточно прав для создания дефектов.' });
+  }
+  next();
+}
+
+module.exports = { 
+  authenticateToken, 
+  requireAdmin,
+  canCreateDefects
 };

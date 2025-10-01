@@ -35,7 +35,7 @@ a:hover {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
-  padding-top: 70px; /* Высота вашей навигационной панели + отступ */
+  padding-top: 70px; /* Высота навигационной панели + отступ */
   margin-top: 15px;
 }
 
@@ -124,7 +124,7 @@ a:hover {
 .defect-card {
   background: white;
   padding: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1рем;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -202,8 +202,9 @@ a:hover {
 
 /* Основной контейнер для контента страницы */
 .main-content, 
-.project-list-container {
-  padding-top: 70px; /* Высота вашей навигационной панели + отступ */
+.project-list-container,
+.defect-list-container {
+  padding-top: 70px; /* Высота навигационной панели + отступ */
   margin-top: 15px;
 }
 

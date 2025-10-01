@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Projects.css';
+import { apiClient } from '../../api/client';
 
 const ProjectForm = ({ onSuccess }) => {
   const navigate = useNavigate();
@@ -22,50 +23,27 @@ const ProjectForm = ({ onSuccess }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
+    
     try {
-      // Получаем токен
-      const token = localStorage.getItem('token');
+      console.log('Отправка данных проекта:', formData);
       
-      // Отображаем данные для отладки
-      console.log('Отправляемые данные:', formData);
-      console.log('Токен:', token);
+      const result = await apiClient.post('/api/projects', formData);
       
-      // Отправляем запрос с токеном
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      // Если ответ не в формате JSON, логируем текст
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('Ответ сервера (текст):', text);
-        throw new Error(`Ошибка сервера: ${response.status}`);
+      console.log('Проект успешно создан:', result);
+      // Очистка формы или редирект на список проектов
+      if (onSuccess) {
+        onSuccess(result);
       }
       
-      const data = await response.json();
-      console.log('Ответ сервера (JSON):', data);
-      
-      setFormData({
-        name: '',
-        description: '',
-        status: 'active',
-        start_date: '',
-        end_date: ''
-      });
-      if (onSuccess) onSuccess(data);
+      // Перенаправляем пользователя на страницу списка проектов
       navigate('/projects');
-    } catch (err) {
-      console.error('Ошибка:', err);
+      
+    } catch (error) {
+      console.error('Ошибка создания проекта:', error);
       setError('Не удалось создать проект. Пожалуйста, попробуйте позже.');
     } finally {
       setLoading(false);

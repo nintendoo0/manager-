@@ -10,13 +10,17 @@ const app = express();
 // В начало файла добавьте:
 require('./database/migrations/init');
 
-// Middleware
+// Конфигурация CORS для разрешения запросов с фронтенда
+app.use(cors({
+  origin: 'http://localhost:3000', // URL фронтенда
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Middleware для обработки JSON и URL-encoded данных
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: 'http://localhost:3000', // URL вашего фронтенда
-  credentials: true
-}));
+
 app.use(helmet());
 app.use(morgan('dev'));
 
@@ -57,17 +61,27 @@ module.exports = app;
 // Проверьте, что маршруты правильно импортированы
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
-const defectRoutes = require('./routes/defects');
-const defectsRouter = require('./routes/defects');
+const defectRoutes = require('./routes/defectRoutes'); // Добавьте эту строку
 
-// И правильно подключены к приложению
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/defects', defectRoutes);
-app.use('/api/defects', defectsRouter);
+// Убедитесь, что эти строки присутствуют перед объявлением маршрутов
+// и не дублируются
 
-// Добавьте это в начало файла после импортов
+// Логирование запросов для отладки
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.originalUrl}`);
+  console.log(`${req.method} ${req.path}`);
   next();
 });
+
+// Отладочный middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  if (req.method === 'POST' || req.method === 'PUT') {
+    console.log('Тело запроса:', JSON.stringify(req.body));
+  }
+  next();
+});
+
+// Маршруты
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/defects', defectRoutes); // Добавьте эту строку

@@ -35,25 +35,99 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB макс размер
 }).single('file');
 
+// Получение всех дефектов
+exports.getAllDefects = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT d.*, p.name as project_name, u.username as assigned_to_name
+      FROM defects d
+      LEFT JOIN projects p ON d.project_id = p.id
+      LEFT JOIN users u ON d.assigned_to = u.id
+      ORDER BY d.created_at DESC
+    `);
+    
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Ошибка при получении дефектов:', error);
+    res.status(500).json({ message: 'Ошибка сервера при получении дефектов' });
+  }
+};
+
+// Получение дефектов по ID проекта
+exports.getDefectsByProjectId = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    const result = await db.query(`
+      SELECT d.*, u.username as assigned_to_name
+      FROM defects d
+      LEFT JOIN users u ON d.assigned_to = u.id
+      WHERE d.project_id = $1
+      ORDER BY d.created_at DESC
+    `, [projectId]);
+    
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Ошибка при получении дефектов проекта:', error);
+    res.status(500).json({ message: 'Ошибка сервера при получении дефектов проекта' });
+  }
+};
+
 // Создание нового дефекта
 exports.createDefect = async (req, res) => {
   try {
-    const { 
-      title, description, priority, status, project_id, assigned_to, deadline 
-    } = req.body;
-    const created_by = req.user.id; // Из middleware аутентификации
+    // Получаем данные из запроса
+    const { title, description, status, priority, project_id, assigned_to } = req.body;
     
-    const result = await db.query(
-      `INSERT INTO defects 
-       (title, description, priority, status, project_id, created_by, assigned_to, deadline) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [title, description, priority, status, project_id, created_by, assigned_to, deadline]
-    );
+    // Проверка обязательных полей
+    if (!title || !project_id) {
+      return res.status(400).json({ message: 'Заголовок и ID проекта обязательны' });
+    }
+    
+    // Получаем данные текущего пользователя из req.user (добавляется middleware authenticateToken)
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    
+    // Проверяем роль (хотя эта проверка уже должна быть в middleware)
+    if (userRole !== 'admin' && userRole !== 'engineer') {
+      return res.status(403).json({ message: 'Недостаточно прав для создания дефектов' });
+    }
+    
+    // Создаем дефект
+    const result = await db.query(`
+      INSERT INTO defects (title, description, status, priority, project_id, assigned_to, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [title, description, status || 'open', priority || 'medium', project_id, assigned_to, userId]);
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Ошибка при создании дефекта:', error);
-    res.status(500).json({ message: 'Ошибка при создании дефекта', error: error.message });
+    res.status(500).json({ message: 'Ошибка сервера при создании дефекта' });
+  }
+};
+
+// Получение дефекта по ID
+exports.getDefectById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await db.query(`
+      SELECT d.*, p.name as project_name, u.username as assigned_to_name
+      FROM defects d
+      LEFT JOIN projects p ON d.project_id = p.id
+      LEFT JOIN users u ON d.assigned_to = u.id
+      WHERE d.id = $1
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Дефект не найден' });
+    }
+    
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('Ошибка при получении дефекта:', error);
+    res.status(500).json({ message: 'Ошибка сервера при получении дефекта' });
   }
 };
 

@@ -9,12 +9,12 @@ const pool = new Pool({
   database: process.env.DB_NAME
 });
 
-// Проверка подключения к БД
-pool.query('SELECT NOW()', (err, res) => {
+// Проверка подключения
+pool.query('SELECT NOW()', (err) => {
   if (err) {
-    console.error('Ошибка подключения к базе данных:', err);
+    console.error('Ошибка подключения к PostgreSQL:', err);
   } else {
-    console.log('База данных успешно подключена');
+    console.log('Успешное подключение к PostgreSQL');
   }
 });
 

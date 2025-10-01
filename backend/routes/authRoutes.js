@@ -7,8 +7,9 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/me', authenticateToken, authController.getCurrentUser);
-
-// Добавляем маршрут для обновления профиля
 router.put('/update-profile', authenticateToken, authController.updateProfile);
+
+// Добавляем новый маршрут для получения списка пользователей
+router.get('/users', authenticateToken, authController.getAllUsers);
 
 module.exports = router;

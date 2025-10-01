@@ -1,0 +1,9 @@
+/* Добавьте эти стили в ваш CSS файл */
+
+.main-content {
+  padding-top: 70px; /* Отступ от верхней навигации */
+}
+
+.defects-container {
+  margin-top: 20px;
+}
