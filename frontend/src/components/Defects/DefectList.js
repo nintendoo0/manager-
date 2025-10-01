@@ -76,6 +76,19 @@ const DefectList = () => {
     });
   };
 
+  const handleExport = async () => {
+    const response = await fetch('/api/defects/export');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'defects_report.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   // Фильтрация дефектов по тексту поиска
   const filteredDefects = defects.filter(defect => {
     if (!filters.search) return true;
@@ -193,6 +206,10 @@ const DefectList = () => {
         </div>
       </div>
       
+      <button onClick={handleExport} className="btn btn-secondary">
+        Экспорт в CSV
+      </button>
+
       {loading ? (
         <div className="loading">Загрузка дефектов...</div>
       ) : error ? (

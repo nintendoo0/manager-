@@ -2,24 +2,20 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'defect_manager',
-  password: process.env.DB_PASSWORD || 'postgres',
-  port: process.env.DB_PORT || 5432,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
-// Проверка соединения
-pool.connect((err, client, done) => {
+// Проверка подключения к БД
+pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Ошибка подключения к базе данных:', err);
   } else {
-    console.log('Подключение к базе данных успешно установлено');
-    done();
+    console.log('База данных успешно подключена');
   }
 });
 
-module.exports = {
-  query: (text, params) => pool.query(text, params),
-  pool
-};
+module.exports = pool;

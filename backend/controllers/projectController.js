@@ -3,21 +3,49 @@ const db = require('../config/db');
 // Создание нового проекта
 exports.createProject = async (req, res) => {
   try {
-    const { name, description, status, start_date, end_date } = req.body;
+    // Логируем все входящие данные
+    console.log('========= СОЗДАНИЕ ПРОЕКТА =========');
+    console.log('Тело запроса:', req.body);
+    console.log('Заголовки:', req.headers);
+    console.log('====================================');
+    
+    const { name, description, status } = req.body;
+    let { start_date, end_date } = req.body;
+    
+    // Проверка формата даты и преобразование
+    if (start_date && start_date.includes('.')) {
+      const [day, month, year] = start_date.split('.');
+      start_date = `${year}-${month}-${day}`;
+    }
+    
+    if (end_date && end_date.includes('.')) {
+      const [day, month, year] = end_date.split('.');
+      end_date = `${year}-${month}-${day}`;
+    }
+    
+    console.log('Обработанные данные:', { name, description, status, start_date, end_date });
+    
+    // Проверка обязательных полей
+    if (!name || !start_date) {
+      return res.status(400).json({ message: 'Название проекта и дата начала обязательны' });
+    }
     
     const result = await db.query(
-      'INSERT INTO projects (name, description, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, description, status, start_date, end_date]
+      `INSERT INTO projects (name, description, status, start_date, end_date) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [name, description, status || 'active', start_date, end_date || null]
     );
+    
+    console.log('Результат запроса:', result.rows[0]);
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Ошибка при создании проекта:', error);
-    res.status(500).json({ message: 'Ошибка при создании проекта', error: error.message });
+    res.status(500).json({ message: 'Ошибка сервера при создании проекта', error: error.message });
   }
 };
 
-// Функция получения всех проектов
+// Получение всех проектов
 exports.getAllProjects = async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM projects ORDER BY created_at DESC');
@@ -26,12 +54,12 @@ exports.getAllProjects = async (req, res) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Ошибка при получении проектов:', error);
-    res.status(500).json({ message: 'Ошибка при получении проектов', error: error.message });
+    res.status(500).json({ message: 'Ошибка сервера при получении проектов' });
   }
 };
 
 // Получение проекта по ID
-exports.getProject = async (req, res) => {
+exports.getProjectById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.query('SELECT * FROM projects WHERE id = $1', [id]);
@@ -43,7 +71,7 @@ exports.getProject = async (req, res) => {
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error('Ошибка при получении проекта:', error);
-    res.status(500).json({ message: 'Ошибка при получении проекта', error: error.message });
+    res.status(500).json({ message: 'Ошибка сервера при получении проекта' });
   }
 };
 

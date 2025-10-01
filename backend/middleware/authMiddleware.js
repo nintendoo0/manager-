@@ -2,12 +2,22 @@ const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 
 function authenticateToken(req, res, next) {
+  // Получаем токен из заголовка
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.sendStatus(401);
-
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Требуется авторизация' });
+  }
+  
+  // Проверяем токен
   jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if (err) {
+      console.error('Ошибка проверки токена:', err);
+      return res.status(403).json({ message: 'Недействительный или просроченный токен' });
+    }
+    
+    // Добавляем данные пользователя в объект запроса
     req.user = user;
     next();
   });

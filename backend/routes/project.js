@@ -1,17 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const projectController = require('../controllers/projectController');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
-// Временная заглушка для маршрутов проектов
-router.get('/', (req, res) => {
-  res.status(200).json({ message: 'Список проектов работает' });
-});
+// Защищенные маршруты - требуют токен аутентификации
+router.post('/', authenticateToken, projectController.createProject);
+router.get('/', authenticateToken, projectController.getAllProjects);
 
-router.post('/', (req, res) => {
-  res.status(201).json({ message: 'Создание проекта работает' });
-});
-
-router.get('/:id', (req, res) => {
-  res.status(200).json({ message: `Получение проекта ${req.params.id} работает` });
-});
-
+// Экспорт маршрутов
 module.exports = router;

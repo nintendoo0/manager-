@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import axios from 'axios';
 import './Projects.css';
 
-const ProjectForm = () => {
+const ProjectForm = ({ onSuccess }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -17,24 +17,56 @@ const ProjectForm = () => {
 
   const { name, description, status, start_date, end_date } = formData;
 
-  const onChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const onSubmit = async e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      await api.post('/projects', formData);
+      // Получаем токен
+      const token = localStorage.getItem('token');
+      
+      // Отображаем данные для отладки
+      console.log('Отправляемые данные:', formData);
+      console.log('Токен:', token);
+      
+      // Отправляем запрос с токеном
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      // Если ответ не в формате JSON, логируем текст
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Ответ сервера (текст):', text);
+        throw new Error(`Ошибка сервера: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Ответ сервера (JSON):', data);
+      
+      setFormData({
+        name: '',
+        description: '',
+        status: 'active',
+        start_date: '',
+        end_date: ''
+      });
+      if (onSuccess) onSuccess(data);
       navigate('/projects');
     } catch (err) {
-      console.error('Ошибка создания проекта:', err);
-      setError(
-        err.response?.data?.message || 
-        'Не удалось создать проект. Пожалуйста, попробуйте позже.'
-      );
+      console.error('Ошибка:', err);
+      setError('Не удалось создать проект. Пожалуйста, попробуйте позже.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +77,7 @@ const ProjectForm = () => {
       <h2>Новый проект</h2>
       {error && <div className="error-message">{error}</div>}
       
-      <form onSubmit={onSubmit} className="project-form">
+      <form onSubmit={handleSubmit} className="project-form">
         <div className="form-group">
           <label htmlFor="name">Название проекта</label>
           <input
@@ -53,7 +85,7 @@ const ProjectForm = () => {
             id="name"
             name="name"
             value={name}
-            onChange={onChange}
+            onChange={handleChange}
             required
           />
         </div>
@@ -64,7 +96,7 @@ const ProjectForm = () => {
             id="description"
             name="description"
             value={description}
-            onChange={onChange}
+            onChange={handleChange}
             rows="4"
           ></textarea>
         </div>
@@ -75,7 +107,7 @@ const ProjectForm = () => {
             id="status"
             name="status"
             value={status}
-            onChange={onChange}
+            onChange={handleChange}
           >
             <option value="active">Активен</option>
             <option value="suspended">Приостановлен</option>
@@ -91,7 +123,7 @@ const ProjectForm = () => {
               id="start_date"
               name="start_date"
               value={start_date}
-              onChange={onChange}
+              onChange={handleChange}
               required
             />
           </div>
@@ -103,7 +135,7 @@ const ProjectForm = () => {
               id="end_date"
               name="end_date"
               value={end_date}
-              onChange={onChange}
+              onChange={handleChange}
             />
           </div>
         </div>

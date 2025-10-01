@@ -12,7 +12,7 @@ require('./database/migrations/init');
 
 // Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: 'http://localhost:3000', // URL вашего фронтенда
   credentials: true
@@ -55,14 +55,16 @@ if (process.env.NODE_ENV !== 'test') {
 module.exports = app;
 
 // Проверьте, что маршруты правильно импортированы
-const authRoutes = require('./routes/auth');
-const projectRoutes = require('./routes/project');
-const defectRoutes = require('./routes/defect');
+const authRoutes = require('./routes/authRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const defectRoutes = require('./routes/defects');
+const defectsRouter = require('./routes/defects');
 
 // И правильно подключены к приложению
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/defects', defectRoutes);
+app.use('/api/defects', defectsRouter);
 
 // Добавьте это в начало файла после импортов
 app.use((req, res, next) => {

@@ -35,6 +35,8 @@ a:hover {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
+  padding-top: 70px; /* Высота вашей навигационной панели + отступ */
+  margin-top: 15px;
 }
 
 /* Формы */
@@ -194,4 +196,23 @@ a:hover {
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
+}
+
+/* или другой глобальный CSS файл */
+
+/* Основной контейнер для контента страницы */
+.main-content, 
+.project-list-container {
+  padding-top: 70px; /* Высота вашей навигационной панели + отступ */
+  margin-top: 15px;
+}
+
+/* Стили для навигационной панели */
+.navbar, 
+header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  /* другие стили */
 }
