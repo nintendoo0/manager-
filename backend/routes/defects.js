@@ -7,13 +7,23 @@ const { Parser } = require('json2csv');
 
 const pool = new Pool(); // настройки подключения к БД
 
-router.use(authenticateToken);
+// Получение всех дефектов
+router.get('/', authenticateToken, defectController.getAllDefects);
 
-router.get('/', defectController.getDefects);
-router.post('/', defectController.createDefect);
-router.get('/:id', defectController.getDefect);
-router.put('/:id', defectController.updateDefect);
-router.delete('/:id', defectController.deleteDefect);
+// Получение дефектов по ID проекта
+router.get('/project/:projectId', authenticateToken, defectController.getDefectsByProjectId);
+
+// Создание нового дефекта
+router.post('/', authenticateToken, defectController.createDefect);
+
+// Получение дефекта по ID
+router.get('/:id', authenticateToken, defectController.getDefectById);
+
+// Обновление дефекта
+router.put('/:id', authenticateToken, defectController.updateDefect);
+
+// Удаление дефекта
+router.delete('/:id', authenticateToken, defectController.deleteDefect);
 
 // Экспорт дефектов в CSV
 router.get('/export', async (req, res) => {

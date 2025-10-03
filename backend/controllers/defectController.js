@@ -76,29 +76,19 @@ exports.getDefectsByProjectId = async (req, res) => {
 // Создание нового дефекта
 exports.createDefect = async (req, res) => {
   try {
-    // Получаем данные из запроса
     const { title, description, status, priority, project_id, assigned_to } = req.body;
+    const created_by = req.user?.id; // Получаем ID текущего пользователя
     
     // Проверка обязательных полей
     if (!title || !project_id) {
       return res.status(400).json({ message: 'Заголовок и ID проекта обязательны' });
     }
     
-    // Получаем данные текущего пользователя из req.user (добавляется middleware authenticateToken)
-    const userId = req.user.id;
-    const userRole = req.user.role;
-    
-    // Проверяем роль (хотя эта проверка уже должна быть в middleware)
-    if (userRole !== 'admin' && userRole !== 'engineer') {
-      return res.status(403).json({ message: 'Недостаточно прав для создания дефектов' });
-    }
-    
-    // Создаем дефект
     const result = await db.query(`
       INSERT INTO defects (title, description, status, priority, project_id, assigned_to, created_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
-    `, [title, description, status || 'open', priority || 'medium', project_id, assigned_to, userId]);
+    `, [title, description, status || 'open', priority || 'medium', project_id, assigned_to, created_by]);
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -208,37 +198,29 @@ exports.getDefect = async (req, res) => {
 exports.updateDefect = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, priority, status, project_id, assigned_to, deadline } = req.body;
+    const { title, description, status, priority, project_id, assigned_to } = req.body;
     
-    // Получаем текущие данные дефекта для проверки прав
-    const currentDefect = await db.query('SELECT * FROM defects WHERE id = $1', [id]);
-    if (currentDefect.rows.length === 0) {
+    // Проверка обязательных полей
+    if (!title) {
+      return res.status(400).json({ message: 'Заголовок дефекта обязателен' });
+    }
+    
+    const result = await db.query(`
+      UPDATE defects
+      SET title = $1, description = $2, status = $3, priority = $4, 
+          project_id = $5, assigned_to = $6, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $7
+      RETURNING *
+    `, [title, description, status, priority, project_id, assigned_to, id]);
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Дефект не найден' });
     }
-    
-    // Только создатель, назначенный пользователь или менеджер может обновлять
-    if (
-      req.user.id !== currentDefect.rows[0].created_by && 
-      req.user.id !== currentDefect.rows[0].assigned_to && 
-      req.user.role !== 'manager' &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(403).json({ message: 'Доступ запрещен' });
-    }
-    
-    const result = await db.query(
-      `UPDATE defects 
-       SET title = $1, description = $2, priority = $3, status = $4, 
-           project_id = $5, assigned_to = $6, deadline = $7, updated_at = NOW() 
-       WHERE id = $8 
-       RETURNING *`,
-      [title, description, priority, status, project_id, assigned_to, deadline, id]
-    );
     
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error('Ошибка при обновлении дефекта:', error);
-    res.status(500).json({ message: 'Ошибка при обновлении дефекта', error: error.message });
+    res.status(500).json({ message: 'Ошибка сервера при обновлении дефекта' });
   }
 };
 
@@ -247,33 +229,16 @@ exports.deleteDefect = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Удаляем связанные комментарии и вложения
-    await db.query('DELETE FROM defect_comments WHERE defect_id = $1', [id]);
-    
-    // Получаем список вложений для удаления файлов
-    const attachments = await db.query('SELECT * FROM defect_attachments WHERE defect_id = $1', [id]);
-    
-    // Удаляем вложения из БД
-    await db.query('DELETE FROM defect_attachments WHERE defect_id = $1', [id]);
-    
-    // Удаляем файлы
-    for (const attachment of attachments.rows) {
-      const filePath = path.join(__dirname, '..', attachment.file_path);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-    
     const result = await db.query('DELETE FROM defects WHERE id = $1 RETURNING *', [id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Дефект не найден' });
     }
     
-    res.status(200).json({ message: 'Дефект успешно удален', defect: result.rows[0] });
+    res.status(200).json({ message: 'Дефект успешно удален', deletedDefect: result.rows[0] });
   } catch (error) {
     console.error('Ошибка при удалении дефекта:', error);
-    res.status(500).json({ message: 'Ошибка при удалении дефекта', error: error.message });
+    res.status(500).json({ message: 'Ошибка сервера при удалении дефекта' });
   }
 };
 

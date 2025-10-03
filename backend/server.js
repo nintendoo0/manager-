@@ -61,7 +61,7 @@ module.exports = app;
 // Проверьте, что маршруты правильно импортированы
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
-const defectRoutes = require('./routes/defectRoutes'); // Добавьте эту строку
+const defectRoutes = require('./routes/defects'); // Изменено с defectRoutes на defects
 
 // Убедитесь, что эти строки присутствуют перед объявлением маршрутов
 // и не дублируются
@@ -84,4 +84,4 @@ app.use((req, res, next) => {
 // Маршруты
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
-app.use('/api/defects', defectRoutes); // Добавьте эту строку
+app.use('/api/defects', defectRoutes); // Теперь это будет работать
