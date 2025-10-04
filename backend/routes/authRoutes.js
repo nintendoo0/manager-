@@ -3,13 +3,19 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
-// Существующие маршруты
-router.post('/register', authController.register);
+// Вход пользователя
 router.post('/login', authController.login);
-router.get('/me', authenticateToken, authController.getCurrentUser);
-router.put('/update-profile', authenticateToken, authController.updateProfile);
 
-// Добавляем новый маршрут для получения списка пользователей
+// Регистрация пользователя (только для админов)
+router.post('/register', authenticateToken, authController.registerUser);
+
+// Получение текущего пользователя
+router.get('/me', authenticateToken, authController.getCurrentUser);
+
+// Получение списка всех пользователей
 router.get('/users', authenticateToken, authController.getAllUsers);
+
+// Новый маршрут для удаления пользователя
+router.delete('/users/:id', authenticateToken, authController.deleteUser);
 
 module.exports = router;

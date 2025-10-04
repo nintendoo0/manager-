@@ -1,85 +1,90 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import { apiClient } from '../../api/client';
+import './Auth.css'; // Добавьте файл стилей, если его еще нет
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const { email, password } = formData;
-
-  const onChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const onSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const res = await api.post('/auth/login', formData);
+      const response = await apiClient.post('/api/auth/login', formData);
       
-      // Сохранение токена и данных пользователя
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       
-      // Перенаправление на главную страницу
       navigate('/');
     } catch (err) {
-      setError(
-        err.response?.data?.message || 
-        'Произошла ошибка при входе. Пожалуйста, попробуйте снова.'
-      );
+      setError(err.message || 'Неверное имя пользователя или пароль');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Вход в систему</h2>
-      {error && <div className="error-message">{error}</div>}
-      
-      <form onSubmit={onSubmit}>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={email}
-            onChange={onChange}
-            required
-          />
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-4">
+          <div className="card shadow">
+            <div className="card-header bg-primary text-white">
+              <h3 className="mb-0">Вход в систему</h3>
+            </div>
+            <div className="card-body">
+              {error && <div className="alert alert-danger">{error}</div>}
+              
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="username" className="form-label">Имя пользователя</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">Пароль</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="btn btn-primary w-100"
+                  disabled={loading}
+                >
+                  {loading ? 'Вход...' : 'Войти'}
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
-        
-        <div className="form-group">
-          <label htmlFor="password">Пароль</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={password}
-            onChange={onChange}
-            required
-          />
-        </div>
-        
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Вход...' : 'Войти'}
-        </button>
-      </form>
-      
-      <div className="auth-links">
-        <p>
-          Нет аккаунта? <a href="/register">Зарегистрироваться</a>
-        </p>
       </div>
     </div>
   );

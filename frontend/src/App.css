@@ -1,3 +1,31 @@
+/* Добавьте эти стили в начало файла */
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.app-content {
+  padding-top: 60px; /* Минимальный отступ под навбаром */
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030; /* Высокий z-index для навбара */
+  background-color: #343a40;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Стиль для всех основных контейнеров страниц */
+.page-container {
+  padding-top: 70px; /* Обеспечивает отступ от навбара */
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* Общие стили */
 :root {
   --primary-color: #4a90e2;
@@ -37,6 +65,49 @@ a:hover {
   padding: 0 2rem;
   padding-top: 70px; /* Высота навигационной панели + отступ */
   margin-top: 15px;
+}
+
+/* Добавьте эти стили в файл App.css */
+
+.container-fluid {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+  box-sizing: border-box;
+}
+
+.app-content {
+  width: 100%;
+  padding-top: 60px; /* отступ под навигационной панелью */
+}
+
+/* Убираем максимальную ширину для всех карточек */
+.card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Убираем фиксированную ширину для тела карточки */
+.card-body {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+
+/* Стили для таблиц */
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100% !important;
+  margin-bottom: 1rem;
+  color: #212529;
 }
 
 /* Формы */

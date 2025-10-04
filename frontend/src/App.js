@@ -10,13 +10,33 @@ import ProjectForm from './components/Projects/ProjectForm';
 import DefectList from './components/Defects/DefectList';
 import DefectDetail from './components/Defects/DefectDetail';
 import DefectForm from './components/Defects/DefectForm';
+import UserManagement from './components/Admin/UserManagement'; // Добавляем импорт
 import Navbar from './components/layout/Navbar';
 import './App.css';
+// import 'bootstrap/dist/css/bootstrap-grid.min.css';
 
 // Проверка аутентификации
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('token') !== null;
   return isAuthenticated ? children : <Navigate to="/login" />;
+};
+
+// Проверка прав администратора
+const AdminRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem('token') !== null;
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isAdmin = user && user.role === 'admin';
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  if (!isAdmin) {
+    return <Navigate to="/" />;
+  }
+  
+  return children;
 };
 
 function App() {
@@ -26,11 +46,21 @@ function App() {
     <AuthProvider>
       <Router>
         {isAuthenticated && <Navbar />}
-        <div className={`app ${isAuthenticated ? 'with-navbar' : ''}`}>
+        <div className={`app ${isAuthenticated ? 'with-navbar' : ''}`} style={{width: '100%'}}>
           <Routes>
             {/* Публичные маршруты */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
+            {/* Маршрут для администрирования пользователей */}
+            <Route 
+              path="/admin/users" 
+              element={
+                <AdminRoute>
+                  <UserManagement />
+                </AdminRoute>
+              } 
+            />
             
             {/* Защищенные маршруты */}
             <Route 

@@ -28,6 +28,12 @@ const Navbar = () => {
           <li className="navbar-item">
             <Link to="/defects" className="navbar-link">Дефекты</Link>
           </li>
+          {/* Добавляем ссылку на управление пользователями только для администраторов */}
+          {user && user.role === 'admin' && (
+            <li className="navbar-item">
+              <Link to="/admin/users" className="navbar-link">Пользователи</Link>
+            </li>
+          )}
           {user && (user.role === 'manager' || user.role === 'admin') && (
             <li className="navbar-item">
               <Link to="/reports" className="navbar-link">Отчеты</Link>

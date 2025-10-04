@@ -9,7 +9,9 @@ const app = express();
 
 // В начало файла добавьте:
 require('./database/migrations/init');
-
+require('./scripts/create-admin')()
+  .then(() => console.log('Проверка администратора выполнена'))
+  .catch(err => console.error('Ошибка при проверке администратора:', err));
 // Конфигурация CORS для разрешения запросов с фронтенда
 app.use(cors({
   origin: 'http://localhost:3000', // URL фронтенда
