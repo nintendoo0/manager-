@@ -64,36 +64,41 @@ exports.register = async (req, res) => {
 // Вход пользователя
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body;
-
-    // Проверка наличия пользователя
-    const result = await db.query(
-      'SELECT * FROM users WHERE username = $1',
-      [username]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
+    const { login, password } = req.body;
+    
+    // Проверяем наличие обязательных полей
+    if (!login || !password) {
+      return res.status(400).json({ message: 'Логин и пароль обязательны' });
     }
-
+    
+    // Ищем пользователя по имени пользователя ИЛИ email
+    const result = await db.query(
+      'SELECT * FROM users WHERE username = $1 OR email = $1',
+      [login]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: 'Неверные учетные данные' });
+    }
+    
     const user = result.rows[0];
-
+    
     // Проверка пароля
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
+      return res.status(401).json({ message: 'Неверные учетные данные' });
     }
-
+    
     // Создание JWT токена
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       SECRET_KEY,
       { expiresIn: '24h' }
     );
-
+    
     // Убираем пароль из ответа
     const { password: _, ...userWithoutPassword } = user;
-
+    
     res.status(200).json({
       message: 'Авторизация успешна',
       token,

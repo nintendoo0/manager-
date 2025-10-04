@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
-import './Auth.css'; // Добавьте файл стилей, если его еще нет
+import './Auth.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    login: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -30,61 +30,57 @@ const Login = () => {
       
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Неверное имя пользователя или пароль');
+      setError(err.message || 'Неверные учетные данные');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-4">
-          <div className="card shadow">
-            <div className="card-header bg-primary text-white">
-              <h3 className="mb-0">Вход в систему</h3>
-            </div>
-            <div className="card-body">
-              {error && <div className="alert alert-danger">{error}</div>}
-              
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="username" className="form-label">Имя пользователя</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Пароль</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <button 
-                  type="submit" 
-                  className="btn btn-primary w-100"
-                  disabled={loading}
-                >
-                  {loading ? 'Вход...' : 'Войти'}
-                </button>
-              </form>
-            </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2>Вход в систему</h2>
+        
+        {error && <div className="auth-alert auth-alert-danger">{error}</div>}
+        
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-form-group">
+            <label htmlFor="login">Имя пользователя или Email</label>
+            <input
+              type="text"
+              id="login"
+              name="login"
+              className="auth-form-control"
+              value={formData.login}
+              onChange={handleChange}
+              required
+              autoFocus
+              placeholder="Введите имя пользователя или email"
+            />
           </div>
-        </div>
+          
+          <div className="auth-form-group">
+            <label htmlFor="password">Пароль</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              className="auth-form-control"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              placeholder="Введите пароль"
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            className="auth-btn auth-btn-primary"
+            disabled={loading}
+          >
+            {loading ? 'Вход...' : 'Войти'}
+          </button>
+        </form>
       </div>
     </div>
   );
