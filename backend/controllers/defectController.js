@@ -227,24 +227,35 @@ exports.getDefect = async (req, res) => {
   }
 };
 
-// Обновление дефекта
+// Обновляем метод updateDefect для проверки прав доступа
+
 exports.updateDefect = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, status, priority, project_id, assigned_to } = req.body;
+    const userRole = req.user.role;
     
-    // Проверка обязательных полей
+    // Проверка доступа: только менеджеры и администраторы могут обновлять дефекты
+    if (!['admin', 'manager'].includes(userRole)) {
+      return res.status(403).json({ message: 'Недостаточно прав для редактирования дефекта' });
+    }
+    
     if (!title) {
-      return res.status(400).json({ message: 'Заголовок дефекта обязателен' });
+      return res.status(400).json({ message: 'Заголовок обязателен' });
     }
     
     const result = await db.query(`
-      UPDATE defects
-      SET title = $1, description = $2, status = $3, priority = $4, 
-          project_id = $5, assigned_to = $6, updated_at = CURRENT_TIMESTAMP
+      UPDATE defects 
+      SET title = $1, 
+          description = $2, 
+          status = $3, 
+          priority = $4, 
+          project_id = $5, 
+          assigned_to = $6,
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = $7
       RETURNING *
-    `, [title, description, status, priority, project_id, assigned_to, id]);
+    `, [title, description, status, priority, project_id, assigned_to || null, id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Дефект не найден' });
@@ -253,7 +264,7 @@ exports.updateDefect = async (req, res) => {
     res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error('Ошибка при обновлении дефекта:', error);
-    res.status(500).json({ message: 'Ошибка сервера при обновлении дефекта' });
+    res.status(500).json({ message: 'Ошибка при обновлении дефекта' });
   }
 };
 

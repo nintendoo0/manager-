@@ -288,3 +288,16 @@ header {
   z-index: 1000;
   /* другие стили */
 }
+
+/* Добавьте эти стили для основного контейнера */
+
+.app-container {
+  padding-top: 70px; /* Отступ для фиксированного навбара */
+}
+
+/* Также можно добавить стили для страниц дефектов */
+.defect-detail-container, 
+.defect-list-container,
+.defect-form-container {
+  padding-top: 20px;
+}

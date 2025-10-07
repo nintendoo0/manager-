@@ -84,6 +84,6 @@ app.use((req, res, next) => {
 });
 
 // Маршруты
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', projectRoutes);
 app.use('/api/defects', defectRoutes); // Теперь это будет работать

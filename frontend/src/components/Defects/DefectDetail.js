@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import api from '../../utils/api';
+import { apiClient } from '../../api/client';
 import './Defects.css';
 
 const DefectDetail = () => {
@@ -12,15 +12,8 @@ const DefectDetail = () => {
   const [defect, setDefect] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   
-  const [formData, setFormData] = useState({
-    status: '',
-    priority: '',
-    assigned_to: '',
-    deadline: ''
-  });
-
+  // Добавляем состояние для комментариев
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -32,52 +25,19 @@ const DefectDetail = () => {
   const fetchDefectData = async () => {
     try {
       setLoading(true);
+      const response = await apiClient.get(`/api/defects/${id}`);
+      setDefect(response);
       
-      // Получаем информацию о дефекте
-      const defectRes = await api.get(`/defects/${id}`);
-      setDefect(defectRes.data);
-      
-      // Устанавливаем значения формы из полученных данных
-      setFormData({
-        status: defectRes.data.status || 'new',
-        priority: defectRes.data.priority || 'medium',
-        assigned_to: defectRes.data.assigned_to || '',
-        deadline: defectRes.data.deadline ? defectRes.data.deadline.split('T')[0] : ''
-      });
-      
-      // Получаем комментарии к дефекту
-      const commentsRes = await api.get(`/defects/${id}/comments`);
-      setComments(Array.isArray(commentsRes.data) ? commentsRes.data : []);
+      // Загрузка комментариев
+      const commentsResponse = await apiClient.get(`/api/defects/${id}/comments`);
+      setComments(commentsResponse || []);
       
       setError(null);
     } catch (err) {
       console.error('Ошибка при загрузке данных дефекта:', err);
-      setError('Не удалось загрузить информацию о дефекте. Пожалуйста, попробуйте позже.');
+      setError('Не удалось загрузить данные дефекта');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      await api.put(`/defects/${id}`, { 
-        ...defect,
-        ...formData 
-      });
-      
-      alert('Дефект успешно обновлен');
-      setIsEditing(false);
-      fetchDefectData();
-    } catch (err) {
-      console.error('Ошибка при обновлении дефекта:', err);
-      alert(err.response?.data?.message || 'Ошибка при обновлении дефекта');
     }
   };
 
@@ -87,68 +47,47 @@ const DefectDetail = () => {
     
     try {
       setSubmittingComment(true);
-      const res = await api.post(`/defects/${id}/comments`, { comment: newComment });
-      setComments([...comments, res.data]);
+      await apiClient.post(`/api/defects/${id}/comments`, { comment: newComment });
       setNewComment('');
-    } catch (err) {
-      console.error('Ошибка при добавлении комментария:', err);
-      alert('Не удалось добавить комментарий');
+      fetchDefectData(); // Перезагружаем данные, включая комментарии
+    } catch (error) {
+      console.error('Ошибка при отправке комментария:', error);
+      alert('Не удалось отправить комментарий');
     } finally {
       setSubmittingComment(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот дефект?')) {
-      return;
-    }
-    
-    try {
-      await api.delete(`/defects/${id}`);
-      navigate('/defects');
-    } catch (err) {
-      console.error('Ошибка при удалении дефекта:', err);
-      alert('Не удалось удалить дефект');
-    }
-  };
-
   const getStatusLabel = (status) => {
-    switch(status) {
-      case 'new': return 'Новый';
-      case 'in_progress': return 'В работе';
-      case 'review': return 'На проверке';
-      case 'closed': return 'Закрыт';
-      case 'cancelled': return 'Отменен';
-      default: return status;
-    }
+    const statusMap = {
+      'new': 'Новый',
+      'in_progress': 'В работе',
+      'review': 'На проверке',
+      'closed': 'Закрыт',
+      'cancelled': 'Отменен'
+    };
+    
+    return statusMap[status] || status;
   };
 
   const getPriorityLabel = (priority) => {
-    switch(priority) {
-      case 'high': return 'Высокий';
-      case 'medium': return 'Средний';
-      case 'low': return 'Низкий';
-      default: return priority;
-    }
+    const priorityMap = {
+      'high': 'Высокий',
+      'medium': 'Средний',
+      'low': 'Низкий'
+    };
+    
+    return priorityMap[priority] || priority;
   };
 
-  // Проверка роли пользователя для редактирования
-  const canEditStatus = () => {
-    return user && ['admin', 'manager'].includes(user.role);
-  };
-  
-  // Проверка возможности комментирования
-  const canComment = () => {
-    return user && ['admin', 'manager', 'engineer'].includes(user.role);
-  };
-  
-  // Проверка возможности удаления
-  const canDelete = () => {
+  // Функция проверки права на редактирование
+  const canEditDefect = () => {
+    // Проверяем, есть ли пользователь и имеет ли он роль admin или manager
     return user && ['admin', 'manager'].includes(user.role);
   };
 
   if (loading) {
-    return <div className="loading">Загрузка данных дефекта...</div>;
+    return <div className="loading">Загрузка данных...</div>;
   }
 
   if (error) {
@@ -156,211 +95,104 @@ const DefectDetail = () => {
   }
 
   if (!defect) {
-    return <div className="error-message">Дефект не найден</div>;
+    return <div className="not-found">Дефект не найден</div>;
   }
 
   return (
     <div className="defect-detail-container">
-      <div className="defect-detail-header">
+      <div className="defect-header">
         <h2>{defect.title}</h2>
-        <div className="defect-detail-actions">
-          {canEditStatus() && !isEditing && (
-            <button onClick={() => setIsEditing(true)} className="btn btn-secondary">
+        <div className="defect-actions">
+          <button 
+            onClick={() => navigate('/defects')} 
+            className="btn btn-secondary"
+          >
+            Назад
+          </button>
+          
+          {/* Показываем кнопку редактирования только для admin и manager */}
+          {canEditDefect() && (
+            <button 
+              onClick={() => navigate(`/defects/${id}/edit`)} 
+              className="btn btn-primary"
+            >
               Редактировать
             </button>
           )}
-          {canDelete() && (
-            <button onClick={handleDelete} className="btn btn-danger">
-              Удалить
-            </button>
-          )}
-          <button onClick={() => navigate('/defects')} className="btn btn-secondary">
-            Назад
-          </button>
         </div>
       </div>
-      
-      {isEditing ? (
-        <div className="edit-section">
-          <h3>Редактирование дефекта</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="status">Статус</label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                >
-                  <option value="new">Новый</option>
-                  <option value="in_progress">В работе</option>
-                  <option value="review">На проверке</option>
-                  <option value="closed">Закрыт</option>
-                  <option value="cancelled">Отменен</option>
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="priority">Приоритет</label>
-                <select
-                  id="priority"
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleInputChange}
-                >
-                  <option value="low">Низкий</option>
-                  <option value="medium">Средний</option>
-                  <option value="high">Высокий</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="assigned_to">Исполнитель</label>
-                <input
-                  type="text"
-                  id="assigned_to"
-                  name="assigned_to"
-                  value={formData.assigned_to}
-                  onChange={handleInputChange}
-                  placeholder="ID исполнителя"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="deadline">Срок исполнения</label>
-                <input
-                  type="date"
-                  id="deadline"
-                  name="deadline"
-                  value={formData.deadline}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>
-                Отмена
-              </button>
-              <button type="submit" className="btn btn-primary">
-                Сохранить
-              </button>
-            </div>
-          </form>
+
+      <div className="defect-info">
+        <div>
+          <span>Статус:</span>
+          <span className={`status-badge ${defect.status}`}>{getStatusLabel(defect.status)}</span>
         </div>
-      ) : (
-        <div className="defect-meta-info">
-          <div className="meta-item">
-            <span className="meta-label">Статус:</span>
-            <span className={`defect-status status-${defect.status}`}>
-              {getStatusLabel(defect.status)}
-            </span>
-          </div>
-          
-          <div className="meta-item">
-            <span className="meta-label">Приоритет:</span>
-            <span className={`defect-priority priority-${defect.priority}`}>
-              {getPriorityLabel(defect.priority)}
-            </span>
-          </div>
-          
-          {defect.project_name && (
-            <div className="meta-item">
-              <span className="meta-label">Проект:</span>
-              <Link to={`/projects/${defect.project_id}`}>{defect.project_name}</Link>
-            </div>
-          )}
-          
-          {defect.assigned_to_name && (
-            <div className="meta-item">
-              <span className="meta-label">Исполнитель:</span>
-              <span>{defect.assigned_to_name}</span>
-            </div>
-          )}
-          
-          {defect.created_by_name && (
-            <div className="meta-item">
-              <span className="meta-label">Создал:</span>
-              <span>{defect.created_by_name}</span>
-            </div>
-          )}
-          
-          {defect.created_at && (
-            <div className="meta-item">
-              <span className="meta-label">Создан:</span>
-              <span>{new Date(defect.created_at).toLocaleString()}</span>
-            </div>
-          )}
-          
-          {defect.deadline && (
-            <div className="meta-item">
-              <span className="meta-label">Срок:</span>
-              <span>{new Date(defect.deadline).toLocaleDateString()}</span>
-            </div>
-          )}
+        <div>
+          <span>Приоритет:</span>
+          <span className={`priority-badge ${defect.priority}`}>{defect.priority}</span>
         </div>
-      )}
-      
-      <div className="defect-description">
-        <h3>Описание</h3>
-        <div className="description-content">
-          {defect.description ? (
-            <pre>{defect.description}</pre>
-          ) : (
-            <p className="no-data">Описание отсутствует</p>
-          )}
+        <div>
+          <span>Проект:</span>
+          <span>{defect.project_name || 'Общага'}</span>
+        </div>
+        <div>
+          <span>Создан:</span>
+          <span>{new Date(defect.created_at).toLocaleString()}</span>
+        </div>
+        <div>
+          <span>Создал:</span>
+          <span>{defect.created_username || 'Неизвестно'}</span>
+        </div>
+        <div>
+          <span>Назначено:</span>
+          <span>{defect.assigned_username || 'Не назначено'}</span>
+        </div>
+
+        <div className="description-box">
+          <h3>Описание</h3>
+          <p>{defect.description || 'Описание отсутствует'}</p>
         </div>
       </div>
-      
-      <div className="defect-comments">
+
+      {/* Раздел комментариев */}
+      <div className="comments-section">
         <h3>Комментарии</h3>
-        {comments.length === 0 ? (
-          <div className="no-data">Нет комментариев</div>
-        ) : (
-          <div className="comments-list">
-            {comments.map(comment => (
+        
+        <div className="comments-list">
+          {comments.length === 0 ? (
+            <p>Нет комментариев</p>
+          ) : (
+            comments.map(comment => (
               <div key={comment.id} className="comment">
                 <div className="comment-header">
                   <span className="comment-author">{comment.username}</span>
-                  <span className="comment-date">
-                    {new Date(comment.created_at).toLocaleString()}
-                  </span>
+                  <span className="comment-date">{new Date(comment.created_at).toLocaleString()}</span>
                 </div>
-                <div className="comment-content">
-                  {comment.comment}
-                </div>
+                <div className="comment-body">{comment.comment}</div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
         
-        {canComment() && (
-          <div className="add-comment">
-            <form onSubmit={handleCommentSubmit}>
-              <div className="form-group">
-                <label htmlFor="newComment">Добавить комментарий</label>
-                <textarea
-                  id="newComment"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  required
-                  rows="3"
-                  placeholder="Введите комментарий..."
-                ></textarea>
-              </div>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                disabled={submittingComment}
-              >
-                {submittingComment ? 'Отправка...' : 'Отправить'}
-              </button>
-            </form>
-          </div>
-        )}
+        <div className="add-comment">
+          <h4>Добавить комментарий</h4>
+          <form onSubmit={handleCommentSubmit}>
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Введите комментарий..."
+              rows="3"
+              required
+            ></textarea>
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              disabled={submittingComment}
+            >
+              {submittingComment ? 'Отправка...' : 'Отправить'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

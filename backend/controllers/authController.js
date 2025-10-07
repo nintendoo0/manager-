@@ -263,11 +263,24 @@ exports.updateProfile = async (req, res) => {
 // Получение списка пользователей (для назначения дефектов)
 exports.getUsers = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, username, email, role FROM users');
+    // Проверяем роль пользователя
+    if (!['admin', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: 'Доступ запрещен. Только администраторы и менеджеры могут просматривать список пользователей.' 
+      });
+    }
+    
+    // Убираем столбец confirmed из запроса, так как он не существует
+    const result = await db.query(`
+      SELECT id, username, email, role, created_at 
+      FROM users 
+      ORDER BY id DESC
+    `);
+    
     res.json(result.rows);
   } catch (error) {
-    console.error('Ошибка при получении списка пользователей:', error);
-    res.status(500).json({ message: 'Ошибка сервера' });
+    console.error('Ошибка при получении пользователей:', error);
+    res.status(500).json({ message: 'Ошибка при получении пользователей' });
   }
 };
 
@@ -315,5 +328,29 @@ exports.deleteUser = async (req, res) => {
   } catch (error) {
     console.error('Ошибка при удалении пользователя:', error);
     res.status(500).json({ message: 'Ошибка при удалении пользователя' });
+  }
+};
+
+// Если у вас есть такой метод, тоже исправьте его
+exports.getAssignableUsers = async (req, res) => {
+  try {
+    if (!['admin', 'manager', 'engineer'].includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: 'Доступ запрещен.' 
+      });
+    }
+    
+    // Убираем проверку на confirmed
+    const result = await db.query(`
+      SELECT id, username, role 
+      FROM users 
+      WHERE role IN ('engineer', 'manager') 
+      ORDER BY username
+    `);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Ошибка при получении списка исполнителей:', error);
+    res.status(500).json({ message: 'Ошибка при получении списка исполнителей' });
   }
 };
