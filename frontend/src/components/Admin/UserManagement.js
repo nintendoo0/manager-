@@ -5,251 +5,209 @@ import './UserManagement.css';
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
     role: 'user'
   });
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // ID пользователя для подтверждения удаления
 
-  // Загрузка пользователей
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await apiClient.get('/api/auth/users');
-        setUsers(data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Ошибка при загрузке пользователей:', err);
-        setError('Не удалось загрузить пользователей. Проверьте права доступа.');
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
 
-  // Обработка изменений в форме
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/api/auth/users');
+      setUsers(response);
+    } catch (error) {
+      console.error('Ошибка при получении списка пользователей:', error);
+      setMessage('Ошибка при загрузке пользователей');
+      setMessageType('error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Создание нового пользователя
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
     
     try {
-      const result = await apiClient.post('/api/auth/register', formData);
-      setUsers([result.user, ...users]);
+      await apiClient.post('/api/auth/register', formData);
       setFormData({
         username: '',
         email: '',
         password: '',
         role: 'user'
       });
-      setSuccess('Пользователь успешно добавлен');
-    } catch (err) {
-      setError(err.message || 'Ошибка при создании пользователя');
-    } finally {
-      setLoading(false);
+      fetchUsers();
+      setMessage('Пользователь успешно создан');
+      setMessageType('success');
+    } catch (error) {
+      console.error('Ошибка при создании пользователя:', error);
+      setMessage('Ошибка при создании пользователя');
+      setMessageType('error');
     }
   };
 
-  // Удаление пользователя
-  const handleDeleteUser = async (userId) => {
-    // Сначала устанавливаем id для подтверждения
-    if (deleteConfirm !== userId) {
-      setDeleteConfirm(userId);
+  const deleteUser = async (userId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
       return;
     }
     
-    // Если подтверждено, удаляем
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-    
     try {
       await apiClient.delete(`/api/auth/users/${userId}`);
-      
-      // Обновляем список пользователей
-      setUsers(users.filter(user => user.id !== userId));
-      setSuccess('Пользователь успешно удален');
-      setDeleteConfirm(null);
-    } catch (err) {
-      setError(err.message || 'Ошибка при удалении пользователя');
-    } finally {
-      setLoading(false);
+      fetchUsers();
+      setMessage('Пользователь успешно удален');
+      setMessageType('success');
+    } catch (error) {
+      console.error('Ошибка при удалении пользователя:', error);
+      setMessage('Ошибка при удалении пользователя');
+      setMessageType('error');
     }
   };
 
-  // Отмена удаления
-  const cancelDelete = () => {
-    setDeleteConfirm(null);
-  };
-
-  // Функция для отображения бейджа с ролью
-  const getRoleBadge = (role) => {
-    const roleClass = `role-badge role-${role.toLowerCase()}`;
-    return <span className={roleClass}>{role}</span>;
-  };
-
-  // Форматирование даты
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU');
+  const confirmUser = async (userId) => {
+    try {
+      await apiClient.post(`/api/auth/users/${userId}/confirm`);
+      fetchUsers();
+      setMessage('Пользователь подтвержден');
+      setMessageType('success');
+    } catch (error) {
+      console.error('Ошибка при подтверждении пользователя:', error);
+      setMessage('Ошибка при подтверждении пользователя');
+      setMessageType('error');
+    }
   };
 
   return (
-    <div className="container-fluid" style={{ paddingTop: '70px' }}>
+    <div className="user-management-container">
       <h2>Управление пользователями</h2>
       
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-      
-      <div className="card mb-4">
-        <div className="card-header">Создать нового пользователя</div>
-        <div className="card-body">
-          <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-            <div className="row">
-              <div className="col-md-6">
-                <div className="mb-3">
-                  <label htmlFor="username" className="form-label">Имя пользователя</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="row">
-              <div className="col-md-6">
-                <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Пароль</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="mb-3">
-                  <label htmlFor="role" className="form-label">Роль</label>
-                  <select
-                    className="form-control"
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                  >
-                    <option value="user">Пользователь</option>
-                    <option value="engineer">Инженер</option>
-                    <option value="manager">Менеджер</option>
-                    <option value="observer">Наблюдатель</option>
-                    <option value="admin">Администратор</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? 'Создание...' : 'Создать пользователя'}
-            </button>
-          </form>
+      {message && (
+        <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-error'}`}>
+          {message}
+          <button className="close-btn" onClick={() => setMessage('')}>×</button>
         </div>
+      )}
+
+      <div className="user-form">
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="username">Имя пользователя</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="password">Пароль</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="role">Роль</label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleInputChange}
+              >
+                <option value="user">Пользователь</option>
+                <option value="engineer">Инженер</option>
+                <option value="manager">Менеджер</option>
+                <option value="admin">Администратор</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="btn btn-primary">Создать пользователя</button>
+        </form>
       </div>
-      
-      <div className="card">
-        <div className="card-header">Список пользователей</div>
-        <div className="card-body">
-          {loading && !users.length && <div className="loading">Загрузка...</div>}
-          
-          {!loading && users.length === 0 ? (
-            <p>Пользователей не найдено</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Имя пользователя</th>
-                    <th>Email</th>
-                    <th>Роль</th>
-                    <th>Дата создания</th>
-                    <th>Действия</th> {/* Новая колонка для кнопок */}
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user.id}>
-                      <td>{user.id}</td>
-                      <td>{user.username}</td>
-                      <td>{user.email}</td>
-                      <td>{getRoleBadge(user.role)}</td>
-                      <td>{formatDate(user.created_at)}</td>
-                      <td>
-                        {/* Кнопка удаления */}
-                        <button 
-                          className={deleteConfirm === user.id ? "btn btn-danger" : "btn btn-outline-danger"}
-                          onClick={() => handleDeleteUser(user.id)}
-                          disabled={loading}
-                        >
-                          {deleteConfirm === user.id ? 'Подтвердить' : 'Удалить'}
-                        </button>
-                        
-                        {/* Кнопка отмены удаления */}
-                        {deleteConfirm === user.id && (
-                          <button 
-                            className="btn btn-outline-secondary ml-2"
-                            onClick={cancelDelete}
-                            style={{ marginLeft: '8px' }}
-                          >
-                            Отмена
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+
+      <div className="users-table-container">
+        {loading ? (
+          <p>Загрузка пользователей...</p>
+        ) : (
+          <table className="users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Имя пользователя</th>
+                <th>Email</th>
+                <th>Роль</th>
+                <th>Дата создания</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id}>
+                  <td>{user.id}</td>
+                  <td>{user.username}</td>
+                  <td>{user.email}</td>
+                  <td>
+                    <span className={`role-badge role-${user.role}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <button 
+                      className="btn btn-danger btn-sm" 
+                      onClick={() => deleteUser(user.id)}
+                    >
+                      Удалить
+                    </button>
+                    {user.confirmed === false && (
+                      <button 
+                        className="btn btn-success btn-sm" 
+                        onClick={() => confirmUser(user.id)}
+                      >
+                        Подтвердить
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

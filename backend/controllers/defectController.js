@@ -282,6 +282,10 @@ exports.addComment = async (req, res) => {
     const { comment } = req.body;
     const user_id = req.user.id;
     
+    if (!comment) {
+      return res.status(400).json({ message: 'Текст комментария обязателен' });
+    }
+    
     // Проверяем, существует ли дефект
     const defectCheck = await db.query('SELECT * FROM defects WHERE id = $1', [id]);
     if (defectCheck.rows.length === 0) {
@@ -304,7 +308,7 @@ exports.addComment = async (req, res) => {
     res.status(201).json(commentWithUser);
   } catch (error) {
     console.error('Ошибка при добавлении комментария:', error);
-    res.status(500).json({ message: 'Ошибка при добавлении комментария', error: error.message });
+    res.status(500).json({ message: 'Ошибка при добавлении комментария' });
   }
 };
 
@@ -316,15 +320,15 @@ exports.getComments = async (req, res) => {
     const result = await db.query(`
       SELECT c.*, u.username 
       FROM defect_comments c
-      JOIN users u ON c.user_id = u.id
+      LEFT JOIN users u ON c.user_id = u.id
       WHERE c.defect_id = $1
-      ORDER BY c.created_at
+      ORDER BY c.created_at ASC
     `, [id]);
     
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Ошибка при получении комментариев:', error);
-    res.status(500).json({ message: 'Ошибка при получении комментариев', error: error.message });
+    res.status(500).json({ message: 'Ошибка при получении комментариев' });
   }
 };
 

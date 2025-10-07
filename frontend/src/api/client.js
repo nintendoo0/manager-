@@ -42,5 +42,27 @@ export const apiClient = {
     }
     
     return await response.json();
+  },
+  
+  // Добавляем метод delete
+  async delete(endpoint) {
+    const token = localStorage.getItem('token');
+    
+    console.log('Запрос DELETE:', `${API_URL}${endpoint}`);
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API ошибка:', errorText);
+      throw new Error(`Ошибка API: ${response.status}`);
+    }
+    
+    return await response.json();
   }
 };

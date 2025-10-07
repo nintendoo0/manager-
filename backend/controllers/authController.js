@@ -295,32 +295,25 @@ exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Проверка прав администратора
-    if (!req.user || req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Доступ запрещен. Только администраторы могут удалять пользователей.' });
+    // Проверка прав доступа - только админ может удалять
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Недостаточно прав для удаления пользователя' });
     }
     
-    // Проверка на удаление самого себя
-    if (req.user.id === parseInt(id)) {
-      return res.status(400).json({ message: 'Невозможно удалить собственную учетную запись.' });
+    // Проверка - нельзя удалить самого себя
+    if (req.user.id == id) {
+      return res.status(400).json({ message: 'Вы не можете удалить свою учетную запись' });
     }
     
-    // Проверка существования пользователя
-    const userCheck = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+    const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
     
-    if (userCheck.rows.length === 0) {
-      return res.status(404).json({ message: 'Пользователь не найден.' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
     }
     
-    // Удаление пользователя
-    const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING id, username, email, role', [id]);
-    
-    res.status(200).json({
-      message: 'Пользователь успешно удален',
-      deletedUser: result.rows[0]
-    });
+    res.status(200).json({ message: 'Пользователь успешно удален' });
   } catch (error) {
     console.error('Ошибка при удалении пользователя:', error);
-    res.status(500).json({ message: 'Ошибка сервера при удалении пользователя' });
+    res.status(500).json({ message: 'Ошибка при удалении пользователя' });
   }
 };

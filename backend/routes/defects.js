@@ -41,4 +41,8 @@ router.get('/export', async (req, res) => {
   }
 });
 
+// Комментарии к дефекту
+router.get('/:id/comments', authenticateToken, defectController.getComments);
+router.post('/:id/comments', authenticateToken, defectController.addComment);
+
 module.exports = router;

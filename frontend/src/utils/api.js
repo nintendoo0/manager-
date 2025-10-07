@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-// Создаем экземпляр axios с базовым URL
+// Создаем экземпляр axios с базовыми параметрами
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',  // Измените на ваш базовый URL
+  baseURL: 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Перехватчик запросов для добавления токена
+// Перехватчик для добавления токена к запросам
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -22,25 +22,12 @@ api.interceptors.request.use(
   }
 );
 
-// Перехватчик ответов для обработки ошибок авторизации
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // Если статус 401 (Unauthorized), выполняем выход из системы
-    if (error.response && error.response.status === 401) {
-      console.log('Токен недействителен или просрочен. Выход из системы...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Если не находимся на странице входа, перенаправляем на нее
-      if (window.location.pathname !== '/login') {
-        window.location = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+// Определяем методы API-клиента
+const apiClient = {
+  get: (url, config) => api.get(url, config),
+  post: (url, data, config) => api.post(url, data, config),
+  put: (url, data, config) => api.put(url, data, config),
+  delete: (url, config) => api.delete(url, config) // Добавьте этот метод, если его нет
+};
 
-export default api;
+export default apiClient;

@@ -264,6 +264,16 @@
   background-color: #f8f9fa;
   padding: 1rem;
   border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.add-comment textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  resize: vertical;
 }
 
 /* Форма дефекта */
@@ -333,4 +343,20 @@
 
 .no-data {
   color: #555;
+}
+
+/* Добавьте эти стили, если их еще нет */
+
+.edit-section {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.edit-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #333;
 }
