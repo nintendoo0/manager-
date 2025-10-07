@@ -1,53 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useLocation } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../../utils/api';
 import './Defects.css';
 
 const DefectList = () => {
-  const { projectId } = useParams();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  
+  const { projectId } = useParams(); // Получаем projectId из URL
   const [defects, setDefects] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [currentProject, setCurrentProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   // Фильтры
   const [filters, setFilters] = useState({
-    status: queryParams.get('status') || '',
-    priority: queryParams.get('priority') || '',
-    project_id: projectId || queryParams.get('project_id') || '',
-    search: queryParams.get('search') || '',
+    status: '',
+    priority: '',
+    project_id: projectId || '', // Используем projectId из URL
+    search: '',
   });
-  
-  // Метаданные о проекте, если отображаем дефекты конкретного проекта
-  const [currentProject, setCurrentProject] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Загружаем список проектов для фильтрации
-        if (!projectId) {
-          const projectsRes = await api.get('/projects');
-          setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
-        } else {
-          // Если показываем дефекты конкретного проекта, получаем информацию о нем
+        // Если показываем дефекты конкретного проекта
+        if (projectId) {
+          // Получаем информацию о проекте
           const projectRes = await api.get(`/projects/${projectId}`);
           setCurrentProject(projectRes.data);
+          
+          // Получаем дефекты только этого проекта
+          const defectsRes = await api.get(`/defects?project_id=${projectId}`);
+          setDefects(Array.isArray(defectsRes.data) ? defectsRes.data : []);
+        } else {
+          // Загружаем список всех проектов для фильтрации
+          const projectsRes = await api.get('/projects');
+          setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
+          
+          // Формируем параметры запроса с учетом фильтров
+          const queryParams = new URLSearchParams();
+          if (filters.status) queryParams.append('status', filters.status);
+          if (filters.priority) queryParams.append('priority', filters.priority);
+          if (filters.project_id) queryParams.append('project_id', filters.project_id);
+          
+          // Получаем все дефекты с фильтрами
+          const defectsRes = await api.get(`/defects?${queryParams.toString()}`);
+          setDefects(Array.isArray(defectsRes.data) ? defectsRes.data : []);
         }
-        
-        // Формируем параметры запроса
-        const queryParams = {};
-        if (filters.status) queryParams.status = filters.status;
-        if (filters.priority) queryParams.priority = filters.priority;
-        if (filters.project_id) queryParams.project_id = filters.project_id;
-        
-        // Получаем дефекты с учетом фильтров
-        const defectsRes = await api.get('/defects', { params: queryParams });
-        setDefects(Array.isArray(defectsRes.data) ? defectsRes.data : []);
         
         setError(null);
       } catch (err) {

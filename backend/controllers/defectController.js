@@ -35,21 +35,54 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB макс размер
 }).single('file');
 
-// Получение всех дефектов
+// Получение всех дефектов с возможностью фильтрации
 exports.getAllDefects = async (req, res) => {
   try {
-    const result = await db.query(`
-      SELECT d.*, p.name as project_name, u.username as assigned_to_name
+    const { project_id, status, priority, assigned_to } = req.query;
+    
+    let query = `
+      SELECT d.*, p.name as project_name, 
+        u1.username as created_by_name, 
+        u2.username as assigned_to_name 
       FROM defects d
       LEFT JOIN projects p ON d.project_id = p.id
-      LEFT JOIN users u ON d.assigned_to = u.id
-      ORDER BY d.created_at DESC
-    `);
+      LEFT JOIN users u1 ON d.created_by = u1.id
+      LEFT JOIN users u2 ON d.assigned_to = u2.id
+      WHERE 1=1
+    `;
+    const params = [];
     
+    // Фильтрация по project_id
+    if (project_id) {
+      params.push(project_id);
+      query += ` AND d.project_id = $${params.length}`;
+    }
+    
+    if (status) {
+      params.push(status);
+      query += ` AND d.status = $${params.length}`;
+    }
+    
+    if (priority) {
+      params.push(priority);
+      query += ` AND d.priority = $${params.length}`;
+    }
+    
+    if (assigned_to) {
+      params.push(assigned_to);
+      query += ` AND d.assigned_to = $${params.length}`;
+    }
+    
+    query += ' ORDER BY d.created_at DESC';
+    
+    console.log('SQL запрос:', query);
+    console.log('Параметры:', params);
+    
+    const result = await db.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Ошибка при получении дефектов:', error);
-    res.status(500).json({ message: 'Ошибка сервера при получении дефектов' });
+    res.status(500).json({ message: 'Ошибка при получении дефектов', error: error.message });
   }
 };
 
