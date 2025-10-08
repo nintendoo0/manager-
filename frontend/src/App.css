@@ -34,6 +34,18 @@ body {
   --light-color: #f4f4f4;
   --danger-color: #dc3545;
   --success-color: #28a745;
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --muted: #6b7280;
+  --text: #111827;
+  --primary: #2563eb;
+  --primary-600: #1e4fd6;
+  --accent: #06b6d4;
+  --danger: #ef4444;
+  --radius: 10px;
+  --shadow-sm: 0 1px 4px rgba(16,24,40,0.06);
+  --shadow-md: 0 6px 18px rgba(17,24,39,0.08);
+  --container-max: 1200px;
 }
 
 * {
@@ -65,6 +77,9 @@ a:hover {
   padding: 0 2rem;
   padding-top: 70px; /* Высота навигационной панели + отступ */
   margin-top: 15px;
+  max-width: var(--container-max);
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 /* Добавьте эти стили в файл App.css */
@@ -87,6 +102,16 @@ a:hover {
 .card {
   width: 100% !important;
   max-width: none !important;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 18px;
+  transition: box-shadow .12s, transform .12s;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-6px);
 }
 
 /* Убираем фиксированную ширину для тела карточки */
@@ -139,25 +164,54 @@ a:hover {
   border-radius: 4px;
   cursor: pointer;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform .08s ease, box-shadow .12s ease, opacity .12s;
+  box-shadow: none;
 }
 
 .btn:hover {
   opacity: 0.9;
 }
 
+.btn:active {
+  transform: translateY(1px);
+}
+
 .btn-primary {
   background: var(--primary-color);
   color: white;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(37,99,235,0.12);
+}
+
+.btn-primary:hover {
+  background: var(--primary-600);
 }
 
 .btn-danger {
   background: var(--danger-color);
   color: white;
+  background: var(--danger);
+  color: #fff;
 }
 
 .btn-success {
   background: var(--success-color);
   color: white;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: var(--muted);
+  border: 1px solid #e6e9ee;
 }
 
 /* Контейнеры авторизации */
@@ -300,4 +354,34 @@ header {
 .defect-list-container,
 .defect-form-container {
   padding-top: 20px;
+}
+
+/* Тема и базовые стили — современный минимализм */
+html, body {
+  height: 100%;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+/* утилиты */
+.h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 18px 0;
+}
+
+.small {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* адаптив */
+@media (max-width: 900px) {
+  .container {
+    padding: 16px;
+  }
 }

@@ -7,6 +7,8 @@
   padding: 1.5rem;
 }
 
+.defect-list-container{ padding:28px 0; }
+
 /* Заголовок и действия */
 .defect-list-header,
 .defect-detail-header {
@@ -18,10 +20,14 @@
 
 /* Фильтры */
 .defect-filters {
-  background-color: #f8f9fa;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  background:transparent; 
+  padding:12px; 
+  border-radius:10px; 
+  margin-bottom:18px; 
+  display:flex; 
+  align-items:center; 
+  gap:12px; 
+  flex-wrap:wrap; 
 }
 
 .filters-row {
@@ -44,10 +50,12 @@
 
 .filter-item select,
 .filter-item input {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  min-width: 150px;
+  min-width:160px; 
+  padding:8px 10px; 
+  border-radius:8px; 
+  border:1px solid #e6e9ee; 
+  background:#fff; 
+  color:var(--text); 
 }
 
 .search-item input {
@@ -56,19 +64,19 @@
 
 /* Список дефектов */
 .defect-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;
 }
 
 .defect-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background:var(--surface);
+  border-radius:12px;
+  padding:18px;
+  box-shadow:var(--shadow-sm);
+  display:flex;
+  flex-direction:column;
+  transition:transform .12s, box-shadow .12s;
 }
 
 .defect-card:hover {
@@ -77,8 +85,9 @@
 }
 
 .defect-card h3 {
-  margin-bottom: 0.75rem;
-  font-size: 1.2rem;
+  margin:0 0 8px 0; 
+  font-size:1.05rem; 
+  color:var(--primary); 
 }
 
 .defect-card h3 a {
@@ -91,32 +100,33 @@
 }
 
 .defect-meta {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  display:flex; 
+  gap:8px; 
+  margin-bottom:10px; 
+  flex-wrap:wrap;
 }
 
 .defect-priority,
 .defect-status {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  padding:6px 8px;
+  border-radius:8px;
+  font-weight:600;
+  font-size:0.82rem;
 }
 
 .priority-high {
-  background-color: #ffebee;
-  color: #b71c1c;
+  background:#ffecec; 
+  color:#b91c1c; 
 }
 
 .priority-medium {
-  background-color: #fff8e1;
-  color: #ff6f00;
+  background:#fff7ed; 
+  color:#b45309; 
 }
 
 .priority-low {
-  background-color: #e8f5e9;
-  color: #1b5e20;
+  background:#ecfdf5; 
+  color:#166534; 
 }
 
 .status-new {
@@ -130,8 +140,8 @@
 }
 
 .status-review {
-  background-color: #f3e5f5;
-  color: #7b1fa2;
+  background:#f5f3ff; 
+  color:#6d28d9; 
 }
 
 .status-closed {
@@ -156,19 +166,23 @@
 }
 
 .defect-description-preview {
-  margin: 0.75rem 0;
-  font-size: 0.9rem;
-  color: #555;
-  flex-grow: 1;
+  color:var(--muted); 
+  margin-bottom:12px; 
+  flex:1; 
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  line-clamp:3;
+  overflow:hidden;
 }
 
 .defect-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid #eee;
+  display:flex; 
+  justify-content:space-between; 
+  align-items:center; 
+  gap:12px; 
+  border-top:1px solid #f1f5f9; 
+  padding-top:12px; 
 }
 
 .defect-dates {
@@ -273,13 +287,6 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-bottom: 0.5rem;
-  resize: vertical;
-}
-
-/* Форма дефекта */
-.defect-form-container h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
 }
 
 .defect-form {
@@ -364,59 +371,8 @@
 /* Добавьте следующие стили */
 
 .defect-detail-container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.defect-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.defect-header h2 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: #333;
-}
-
-.defect-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  padding: 8px 15px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #0069d9;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
+  padding:24px; 
+  background:transparent; 
 }
 
 /* Стили для информации о дефекте */
@@ -538,4 +494,123 @@
 
 .add-comment button {
   padding: 8px 15px;
+}
+
+/* сетка карточек */
+.defect-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;
+}
+
+.defect-card{
+  background:var(--surface);
+  border-radius:12px;
+  padding:18px;
+  box-shadow:var(--shadow-sm);
+  display:flex;
+  flex-direction:column;
+  transition:transform .12s, box-shadow .12s;
+}
+
+.defect-card h3{ margin:0 0 8px 0; font-size:1.05rem; color:var(--primary); }
+.defect-meta{ display:flex; gap:8px; margin-bottom:10px; }
+
+.defect-priority, .defect-status{
+  padding:6px 8px;
+  border-radius:8px;
+  font-weight:600;
+  font-size:0.82rem;
+}
+
+.priority-high{ background:#ffecec; color:#b91c1c; }
+.priority-medium{ background:#fff7ed; color:#b45309; }
+.priority-low{ background:#ecfdf5; color:#166534; }
+
+.status-review{ background:#f5f3ff; color:#6d28d9; }
+
+/* превью описания */
+.defect-description-preview{ color:var(--muted); margin-bottom:12px; flex:1; }
+
+/* футер карточки */
+.defect-footer{ display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid #f1f5f9; padding-top:12px; }
+
+/* форма/деталь */
+.defect-detail-container{ padding:24px; background:transparent; }
+
+/* На end: добавляем закрывающую скобку, если парность нарушена */
+
+/* адаптив */
+@media (max-width:700px){
+  .defect-cards{ grid-template-columns:1fr; }
+  .filter-item select, .filter-item input{ min-width:120px; }
+}
+
+/* Фикс верстки страницы "Дефект — подробности" */
+.defect-detail-wrapper {
+  max-width: var(--container-max);
+  margin: 24px auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.defect-detail-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: visible;
+}
+
+/* Верхняя группа кнопок (Назад, Редактировать и т.д.) */
+.defect-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+/* Список мета-полей (Статус / Приоритет / Проект / Даты) */
+.defect-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 18px 0;
+  color: var(--muted);
+}
+.defect-meta-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.defect-label {
+  min-width: 110px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.defect-value { color: var(--text); }
+
+/* Блок описания */
+.defect-description-box {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Кнопки внизу карточки (по умолчанию не накладываются) */
+.defect-detail-card .btn {
+  margin: 0;
+}
+
+/* Адаптив */
+@media (max-width: 900px) {
+  .defect-detail-wrapper { padding: 16px; }
+  .defect-label { min-width: 90px; }
+  .defect-actions { flex-wrap: wrap; }
 }

@@ -1,7 +1,19 @@
 /* Добавьте эти стили в ваш CSS файл */
 
+/* небольшие утилиты и отступы */
 .main-content {
-  padding-top: 70px; /* Отступ от верхней навигации */
+  padding-top: 84px; /* пространство под новый navbar */
+  min-height: calc(100vh - 84px);
+}
+
+.page-section{
+  margin-bottom:28px;
+}
+
+/* helper: центрированные карточки */
+.center-card{
+  max-width:760px;
+  margin:0 auto;
 }
 
 .defects-container {
