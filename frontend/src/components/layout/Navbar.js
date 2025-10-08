@@ -28,7 +28,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-logo">СистемаКонтроля</Link>
+        <Link to="/" className="navbar-logo">Manager</Link>
 
         <ul className="navbar-menu" role="menubar">
           <li className="navbar-item" role="none">
