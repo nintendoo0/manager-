@@ -81,17 +81,36 @@ const DefectList = () => {
     });
   };
 
+  // право на экспорт: только admin или manager
+  const canExport = user && (user.role === 'admin' || user.role === 'manager');
+
   const handleExport = async () => {
-    const response = await fetch('/api/defects/export');
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'defects_report.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    try {
+      const params = {};
+      if (filters.status) params.status = filters.status;
+      if (filters.priority) params.priority = filters.priority;
+      if (filters.project_id) params.project_id = filters.project_id;
+      if (filters.search) params.search = filters.search;
+      if (projectId) params.project_id = projectId;
+
+      const response = await api.get('/reports/defects', {
+        params,
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `defects_report_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Ошибка экспорта:', err);
+      alert('Не удалось сформировать отчёт');
+    }
   };
 
   // Фильтрация дефектов по тексту поиска
@@ -218,9 +237,11 @@ const DefectList = () => {
         </div>
       </div>
       
-      <button onClick={handleExport} className="btn btn-secondary">
-        Экспорт в CSV
-      </button>
+      {canExport && (
+        <button onClick={handleExport} className="btn btn-secondary">
+          Экспорт в CSV
+        </button>
+      )}
 
       {loading ? (
         <div className="loading">Загрузка дефектов...</div>

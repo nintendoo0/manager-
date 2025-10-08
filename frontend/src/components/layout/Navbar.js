@@ -65,12 +65,7 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="auth-links">
-              <Link to="/login" className="navbar-link">Войти</Link>
-              <Link to="/register" className="navbar-link">Регистрация</Link>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>

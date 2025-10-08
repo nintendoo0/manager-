@@ -64,6 +64,7 @@ module.exports = app;
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const defectRoutes = require('./routes/defects'); // Изменено с defectRoutes на defects
+const reportRoutes = require('./routes/reportRoutes'); // Добавлено
 
 // Убедитесь, что эти строки присутствуют перед объявлением маршрутов
 // и не дублируются
@@ -87,3 +88,4 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', projectRoutes);
 app.use('/api/defects', defectRoutes); // Теперь это будет работать
+app.use('/api/reports', reportRoutes); // Добавлено
