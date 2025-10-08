@@ -22,28 +22,40 @@ const DefectDetail = () => {
   const [commentError, setCommentError] = useState(null);
   
   useEffect(() => {
-    fetchDefectData();
+    let mounted = true;
+    async function load() {
+      try {
+        setLoading(true);
+        const response = await apiClient.get(`/api/defects/${id}`);
+        const d = response;
+        const commentsResponse = await apiClient.get(`/api/defects/${id}/comments`).catch(() => ({ data: [] }));
+        if (!mounted) return;
+        setDefect(d || null);
+        setComments(commentsResponse.data ?? commentsResponse ?? []);
+        setError(null);
+      } catch (err) {
+        console.error('Ошибка при загрузке данных дефекта:', err);
+        if (mounted) setError('Не удалось загрузить дефект');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => { mounted = false; };
   }, [id]);
 
-  const fetchDefectData = async () => {
+  const handleDelete = async () => {
+    if (!confirm('Удалить дефект?')) return;
     try {
-      setLoading(true);
-      const response = await apiClient.get(`/api/defects/${id}`);
-      setDefect(response);
-      
-      // Загрузка комментариев
-      const commentsResponse = await apiClient.get(`/api/defects/${id}/comments`);
-      setComments(commentsResponse || []);
-      
-      setError(null);
+      await apiClient.delete(`/api/defects/${id}`);
+      navigate('/defects');
     } catch (err) {
-      console.error('Ошибка при загрузке данных дефекта:', err);
-      setError('Не удалось загрузить данные дефекта');
-    } finally {
-      setLoading(false);
+      console.error('Ошибка при удалении дефекта:', err);
+      alert('Ошибка при удалении дефекта');
     }
   };
 
+<<<<<<< HEAD
   const handleDelete = async () => {
     if (!confirm('Удалить дефект?')) return;
     try {
@@ -58,6 +70,9 @@ const DefectDetail = () => {
       setSubmittingComment(false);
     }
   };
+=======
+  const formatDate = (date) => date ? new Date(date).toLocaleString() : '—';
+>>>>>>> 722b129 (Сделал всё за 5 минут, что делал Гафур 5 часов)
 
   const getStatusLabel = (status) => {
     const statusMap = {

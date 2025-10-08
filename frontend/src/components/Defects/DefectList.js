@@ -1,19 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Card from '../UI/Card';
 import NeonButton from '../UI/NeonButton';
 import api from '../../utils/api';
 import './Defects.css';
 
-const DefectList = () => {
+function DefectList(props) {
   const { projectId } = useParams(); // Получаем projectId из URL
+  const defaultFilters = { status: 'all', priority: 'all', project: 'all', q: '' };
+  const [filters, setFilters] = useState(defaultFilters);
   const [defects, setDefects] = useState([]);
   const [projects, setProjects] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [q, setQ] = useState('');
   const navigate = useNavigate();
+
+  // Сброс фильтров при первой загрузке страницы
+  useEffect(() => {
+    // Сбрасываем локальный стейт
+    setFilters(defaultFilters);
+
+    // Очищаем параметры в URL (если фильтры были в query)
+    if (window && window.history && window.location.search) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // Удаляем сохранённые фильтры из localStorage (если используется)
+    try {
+      localStorage.removeItem('defectFilters'); // замените ключ, если у вас другой
+    } catch (e) {
+      // noop
+    }
+  }, []); // выполняется только один раз при монтировании
 
   useEffect(() => {
     let mounted = true;
