@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiClient } from '../../api/client';
+import apiClient from '../../utils/api'; // Изменено с { apiClient } from '../../api/client'
 import './UserManagement.css';
 
 const UserManagement = () => {
@@ -22,8 +22,8 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/auth/users');
-      setUsers(response);
+      const response = await apiClient.get('/auth/users');
+      setUsers(response.data); // .data для axios
     } catch (error) {
       console.error('Ошибка при получении списка пользователей:', error);
       setMessage('Ошибка при загрузке пользователей');
@@ -45,7 +45,7 @@ const UserManagement = () => {
     e.preventDefault();
     
     try {
-      await apiClient.post('/api/auth/register', formData);
+      await apiClient.post('/auth/register', formData);
       setFormData({
         username: '',
         email: '',
@@ -68,7 +68,7 @@ const UserManagement = () => {
     }
     
     try {
-      await apiClient.delete(`/api/auth/users/${userId}`);
+      await apiClient.delete(`/auth/users/${userId}`);
       fetchUsers();
       setMessage('Пользователь успешно удален');
       setMessageType('success');
@@ -81,7 +81,7 @@ const UserManagement = () => {
 
   const confirmUser = async (userId) => {
     try {
-      await apiClient.post(`/api/auth/users/${userId}/confirm`);
+      await apiClient.post(`/auth/users/${userId}/confirm`);
       fetchUsers();
       setMessage('Пользователь подтвержден');
       setMessageType('success');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiClient } from '../../api/client';
+import apiClient from '../../utils/api'; // Изменено с { apiClient } from '../../api/client
 import './Auth.css';
 
 const Login = () => {
@@ -23,14 +23,14 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await apiClient.post('/api/auth/login', formData);
+      const response = await apiClient.post('/auth/login', formData);
       
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('token', response.data.token); // .data для axios
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Неверные учетные данные');
+      setError(err.response?.data?.message || 'Неверные учетные данные');
     } finally {
       setLoading(false);
     }

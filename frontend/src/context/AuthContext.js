@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import apiClient from '../utils/api'; // Изменено с { apiClient } from '../api/client'
 
 // Создаем контекст
 export const AuthContext = createContext();
@@ -21,8 +21,8 @@ export const AuthProvider = ({ children }) => {
       }
       
       try {
-        const userData = await apiClient.get('/api/auth/me');
-        setUser(userData);
+        const response = await apiClient.get('/auth/me');
+        setUser(response.data); // Обратите внимание на .data для axios
       } catch (err) {
         console.error('Ошибка при загрузке данных пользователя:', err);
         setError('Не удалось загрузить данные пользователя');
@@ -37,10 +37,10 @@ export const AuthProvider = ({ children }) => {
   // Функция для входа в систему
   const login = async (credentials) => {
     try {
-      const response = await apiClient.post('/api/auth/login', credentials);
-      localStorage.setItem('token', response.token);
-      setUser(response.user);
-      return response;
+      const response = await apiClient.post('/auth/login', credentials);
+      localStorage.setItem('token', response.data.token); // .data для axios
+      setUser(response.data.user);
+      return response.data;
     } catch (err) {
       throw err;
     }

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import Card from '../UI/Card';
 import NeonButton from '../UI/NeonButton';
 import { AuthContext } from '../../context/AuthContext';
-import { apiClient } from '../../api/client';
+import apiClient from '../../utils/api'; // Изменено с { apiClient } from '../../api/client
 import './Defects.css';
 
 const DefectDetail = () => {
@@ -22,40 +22,42 @@ const DefectDetail = () => {
   const [commentError, setCommentError] = useState(null);
   
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        setLoading(true);
-        const response = await apiClient.get(`/api/defects/${id}`);
-        const d = response;
-        const commentsResponse = await apiClient.get(`/api/defects/${id}/comments`).catch(() => ({ data: [] }));
-        if (!mounted) return;
-        setDefect(d || null);
-        setComments(commentsResponse.data ?? commentsResponse ?? []);
-        setError(null);
-      } catch (err) {
-        console.error('Ошибка при загрузке данных дефекта:', err);
-        if (mounted) setError('Не удалось загрузить дефект');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => { mounted = false; };
+    fetchDefectData();
   }, [id]);
+
+  const fetchDefectData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/api/defects/${id}`);
+      setDefect(response);
+      
+      // Загрузка комментариев
+      const commentsResponse = await apiClient.get(`/api/defects/${id}/comments`);
+      setComments(commentsResponse || []);
+      
+      setError(null);
+    } catch (err) {
+      console.error('Ошибка при загрузке данных дефекта:', err);
+      setError('Не удалось загрузить данные дефекта');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm('Удалить дефект?')) return;
     try {
-      await apiClient.delete(`/api/defects/${id}`);
-      navigate('/defects');
-    } catch (err) {
-      console.error('Ошибка при удалении дефекта:', err);
-      alert('Ошибка при удалении дефекта');
+      setSubmittingComment(true);
+      await apiClient.post(`/api/defects/${id}/comments`, { comment: newComment });
+      setNewComment('');
+      fetchDefectData(); // Перезагружаем данные, включая комментарии
+    } catch (error) {
+      console.error('Ошибка при отправке комментария:', error);
+      alert('Не удалось отправить комментарий');
+    } finally {
+      setSubmittingComment(false);
     }
   };
-
-  const formatDate = (date) => date ? new Date(date).toLocaleString() : '—';
 
   const getStatusLabel = (status) => {
     const statusMap = {
