@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const userString = localStorage.getItem('user');
-  const user = userString ? JSON.parse(userString) : null;
-  const [showDropdown, setShowDropdown] = useState(false);
-
+  const { user, logout } = useContext(AuthContext);
+  
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
 
+  // Вместо прямого доступа к localStorage используем контекст
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -22,52 +21,29 @@ const Navbar = () => {
         </Link>
         
         <ul className="navbar-menu">
-          <li className="navbar-item">
-            <Link to="/projects" className="navbar-link">Проекты</Link>
-          </li>
-          <li className="navbar-item">
-            <Link to="/defects" className="navbar-link">Дефекты</Link>
-          </li>
-          {/* Добавляем ссылку на управление пользователями только для администраторов */}
-          {user && user.role === 'admin' && (
-            <li className="navbar-item">
-              <Link to="/admin/users" className="navbar-link">Пользователи</Link>
-            </li>
-          )}
-          {user && (user.role === 'manager' || user.role === 'admin') && (
-            <li className="navbar-item">
-              <Link to="/reports" className="navbar-link">Отчеты</Link>
-            </li>
+          {user && (
+            <>
+              <li className="navbar-item">
+                <Link to="/projects" className="navbar-link">Проекты</Link>
+              </li>
+              <li className="navbar-item">
+                <Link to="/defects" className="navbar-link">Дефекты</Link>
+              </li>
+              {user.role === 'admin' && (
+                <li className="navbar-item">
+                  <Link to="/admin/users" className="navbar-link">Пользователи</Link>
+                </li>
+              )}
+            </>
           )}
         </ul>
         
         {user && (
           <div className="navbar-user">
-            <div 
-              className="user-profile-container" 
-              onClick={() => setShowDropdown(!showDropdown)}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
-              tabIndex="0"
-            >
-              <div className="user-avatar">
-                {user.username ? user.username.charAt(0).toUpperCase() : 'У'}
-              </div>
-              <span className="user-name">{user.username}</span>
-              <i className={`fa fa-chevron-down ${showDropdown ? 'rotate' : ''}`}></i>
-              
-              {showDropdown && (
-                <div className="user-dropdown">
-                  <Link to="/profile" className="dropdown-item">
-                    <i className="fas fa-user"></i> Мой профиль
-                  </Link>
-                  <hr className="dropdown-divider" />
-                  <button onClick={handleLogout} className="dropdown-item logout-button">
-                    <i className="fas fa-sign-out-alt"></i> Выйти
-                  </button>
-                </div>
-              )}
+            <div className="navbar-actions">
+              <Link to="/profile" className="profile-link">{user.username}</Link>
+              <button onClick={handleLogout} className="logout-btn">Выйти</button>
             </div>
-            
           </div>
         )}
       </div>

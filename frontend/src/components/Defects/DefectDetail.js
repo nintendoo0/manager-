@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { apiClient } from '../../api/client';
+import apiClient from '../../utils/api'; // Изменено с { apiClient } from '../../api/client
 import './Defects.css';
 
 const DefectDetail = () => {
@@ -25,12 +25,12 @@ const DefectDetail = () => {
   const fetchDefectData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get(`/api/defects/${id}`);
-      setDefect(response);
+      const response = await apiClient.get(`/defects/${id}`);
+      setDefect(response.data); // .data для axios
       
       // Загрузка комментариев
-      const commentsResponse = await apiClient.get(`/api/defects/${id}/comments`);
-      setComments(commentsResponse || []);
+      const commentsResponse = await apiClient.get(`/defects/${id}/comments`);
+      setComments(Array.isArray(commentsResponse.data) ? commentsResponse.data : []);
       
       setError(null);
     } catch (err) {
@@ -47,7 +47,7 @@ const DefectDetail = () => {
     
     try {
       setSubmittingComment(true);
-      await apiClient.post(`/api/defects/${id}/comments`, { comment: newComment });
+      await apiClient.post(`/defects/${id}/comments`, { comment: newComment });
       setNewComment('');
       fetchDefectData(); // Перезагружаем данные, включая комментарии
     } catch (error) {
