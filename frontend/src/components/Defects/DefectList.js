@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../../utils/api';
+import { AuthContext } from '../../context/AuthContext';
 import './Defects.css';
 
 const DefectList = () => {
@@ -127,12 +128,20 @@ const DefectList = () => {
             'Все дефекты'
           }
         </h2>
-        <Link 
-          to={projectId ? `/projects/${projectId}/defects/new` : '/defects/new'}
-          className="btn btn-primary"
-        >
-          Новый дефект
-        </Link>
+
+        {/* Кнопка Новый дефект видна только admin/manager */}
+        {(() => {
+          const { user } = useContext(AuthContext) || {};
+          const canCreate = user && (user.role === 'admin' || user.role === 'manager');
+          return canCreate ? (
+            <Link 
+              to={projectId ? `/projects/${projectId}/defects/new` : '/defects/new'}
+              className="btn btn-primary"
+            >
+              Новый дефект
+            </Link>
+          ) : null;
+        })()}
       </div>
       
       <div className="defect-filters">
