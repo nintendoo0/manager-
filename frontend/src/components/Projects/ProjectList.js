@@ -31,7 +31,7 @@ const ProjectList = () => {
   }, []);
 
   function openProject(projectId) {
-    // переходит на страницу проекта; убедитесь, что маршрут /projects/:id настрое
+    // переходит на страницу проекта; убедитесь, что маршрут /projects/:id настро
     navigate(`/projects/${projectId}`);
   }
 
