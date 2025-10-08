@@ -6,6 +6,10 @@ import './Defects.css';
 
 const DefectList = () => {
   const { projectId } = useParams(); // Получаем projectId из URL
+
+  // moved hook to top-level
+  const { user } = useContext(AuthContext) || {};
+
   const [defects, setDefects] = useState([]);
   const [projects, setProjects] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
@@ -119,6 +123,9 @@ const DefectList = () => {
     }
   };
 
+  // право на создание: только admin или manager
+  const canCreate = user && (user.role === 'admin' || user.role === 'manager');
+
   return (
     <div className="defect-list-container">
       <div className="defect-list-header">
@@ -130,18 +137,14 @@ const DefectList = () => {
         </h2>
 
         {/* Кнопка Новый дефект видна только admin/manager */}
-        {(() => {
-          const { user } = useContext(AuthContext) || {};
-          const canCreate = user && (user.role === 'admin' || user.role === 'manager');
-          return canCreate ? (
-            <Link 
-              to={projectId ? `/projects/${projectId}/defects/new` : '/defects/new'}
-              className="btn btn-primary"
-            >
-              Новый дефект
-            </Link>
-          ) : null;
-        })()}
+        {canCreate && (
+          <Link 
+            to={projectId ? `/projects/${projectId}/defects/new` : '/defects/new'}
+            className="btn btn-primary"
+          >
+            Новый дефект
+          </Link>
+        )}
       </div>
       
       <div className="defect-filters">
