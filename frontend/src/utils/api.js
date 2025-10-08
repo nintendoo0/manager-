@@ -1,19 +1,18 @@
 import axios from 'axios';
 
-// Создаем экземпляр axios с базовыми параметрами
-const api = axios.create({
+const apiClient = axios.create({
   baseURL: 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Перехватчик для добавления токена к запросам
-api.interceptors.request.use(
+// Добавляем перехватчик запросов для добавления токена авторизации
+apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -22,12 +21,19 @@ api.interceptors.request.use(
   }
 );
 
-// Определяем методы API-клиента
-const apiClient = {
-  get: (url, config) => api.get(url, config),
-  post: (url, data, config) => api.post(url, data, config),
-  put: (url, data, config) => api.put(url, data, config),
-  delete: (url, config) => api.delete(url, config) // Добавьте этот метод, если его нет
-};
+// Добавляем перехватчик ответов для обработки ошибок авторизации
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      console.log('Доступ запрещен. Проверьте права доступа.');
+      // При необходимости можно редиректить на страницу логина
+      // или вызывать другие действия
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default apiClient;

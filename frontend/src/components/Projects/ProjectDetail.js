@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import { AuthContext } from '../../context/AuthContext';
+import apiClient from '../../utils/api';
 import './Projects.css';
 
 const ProjectDetail = () => {
@@ -17,11 +18,11 @@ const ProjectDetail = () => {
         setLoading(true);
         
         // Получаем информацию о проекте
-        const projectResponse = await api.get(`/projects/${id}`);
+        const projectResponse = await apiClient.get(`/projects/${id}`);
         setProject(projectResponse.data);
         
         // Получаем связанные дефекты
-        const defectsResponse = await api.get(`/defects?project_id=${id}`);
+        const defectsResponse = await apiClient.get(`/defects?project_id=${id}`);
         setDefects(defectsResponse.data);
         
         setError(null);
@@ -37,19 +38,16 @@ const ProjectDetail = () => {
   }, [id]);
 
   const handleDelete = async () => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот проект?')) {
-      return;
-    }
-    
-    try {
-      await api.delete(`/projects/${id}`);
-      navigate('/projects');
-    } catch (err) {
-      console.error('Ошибка удаления проекта:', err);
-      setError(
-        err.response?.data?.message || 
-        'Не удалось удалить проект. Пожалуйста, попробуйте позже.'
-      );
+    if (window.confirm('Вы уверены, что хотите удалить этот проект?')) {
+      try {
+        setLoading(true);
+        await apiClient.delete(`/projects/${id}`);
+        navigate('/projects');
+      } catch (err) {
+        console.error('Ошибка удаления проекта:', err);
+        setError('Не удалось удалить проект');
+        setLoading(false);
+      }
     }
   };
 

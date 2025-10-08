@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../utils/api';
+import { AuthContext } from '../../context/AuthContext';
+import apiClient from '../../utils/api';
 import './Defects.css';
 
 const DefectForm = () => {
   const navigate = useNavigate();
   const { id, projectId } = useParams();
   const isEditMode = !!id;
+  
+  // Добавляем доступ к контексту аутентификации
+  const { user } = useContext(AuthContext);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -28,26 +32,25 @@ const DefectForm = () => {
       try {
         setLoading(true);
         
-        // Получаем список проектов
-        const projectsRes = await api.get('/projects');
-        setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
+        // Загрузка проектов
+        const projectsResponse = await apiClient.get('/projects');
+        setProjects(projectsResponse.data || []);
         
-        // Получаем список пользователей
-        const usersRes = await api.get('/auth/users');
-        setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+        // Загрузка пользователей только для admin и manager
+        if (user && (user.role === 'admin' || user.role === 'manager')) {
+          try {
+            const usersResponse = await apiClient.get('/auth/users');
+            setUsers(usersResponse.data || []);
+          } catch (err) {
+            console.error('Ошибка при загрузке пользователей:', err);
+            // Не блокируем всю форму из-за ошибки загрузки пользователей
+          }
+        }
         
-        // Если это режим редактирования, загружаем данные дефекта
+        // Если режим редактирования, загружаем данные дефекта
         if (isEditMode) {
-          const defectRes = await api.get(`/defects/${id}`);
-          setFormData({
-            title: defectRes.data.title || '',
-            description: defectRes.data.description || '',
-            priority: defectRes.data.priority || 'medium',
-            status: defectRes.data.status || 'new',
-            project_id: defectRes.data.project_id || '',
-            assigned_to: defectRes.data.assigned_to || '',
-            deadline: defectRes.data.deadline ? defectRes.data.deadline.split('T')[0] : ''
-          });
+          const defectResponse = await apiClient.get(`/defects/${id}`);
+          setFormData(defectResponse.data);
         } else if (projectId) {
           // Если создаем новый дефект для конкретного проекта
           setFormData(prev => ({
@@ -66,7 +69,7 @@ const DefectForm = () => {
     };
 
     fetchInitialData();
-  }, [id, isEditMode, projectId]);
+  }, [id, isEditMode, projectId, user]);
 
   const onChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -79,9 +82,9 @@ const DefectForm = () => {
 
     try {
       if (isEditMode) {
-        await api.put(`/defects/${id}`, formData);
+        await apiClient.put(`/defects/${id}`, formData);
       } else {
-        await api.post('/defects', formData);
+        await apiClient.post('/defects', formData);
       }
       
       // Возвращаемся к списку дефектов проекта или к общему списку

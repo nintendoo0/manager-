@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import apiClient from '../../utils/api'; // Добавляем импорт API-клиента
 import './Projects.css';
-import { apiClient } from '../../api/client';
 
 const ProjectForm = ({ onSuccess }) => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -15,6 +15,26 @@ const ProjectForm = ({ onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const isEditMode = Boolean(id);
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetchProjectData();
+    }
+  }, [id]);
+
+  const fetchProjectData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/projects/${id}`); // Убираем лишний префикс /api
+      setFormData(response.data); // Добавляем .data для axios
+    } catch (err) {
+      console.error('Ошибка получения данных проекта:', err);
+      setError('Не удалось загрузить данные проекта');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const { name, description, status, start_date, end_date } = formData;
 
@@ -29,22 +49,15 @@ const ProjectForm = ({ onSuccess }) => {
     setError(null);
     
     try {
-      console.log('Отправка данных проекта:', formData);
-      
-      const result = await apiClient.post('/api/projects', formData);
-      
-      console.log('Проект успешно создан:', result);
-      // Очистка формы или редирект на список проектов
-      if (onSuccess) {
-        onSuccess(result);
+      if (isEditMode) {
+        await apiClient.put(`/projects/${id}`, formData); // Убираем лишний префикс /api
+      } else {
+        await apiClient.post('/projects', formData); // Убираем лишний префикс /api
       }
-      
-      // Перенаправляем пользователя на страницу списка проектов
       navigate('/projects');
-      
-    } catch (error) {
-      console.error('Ошибка создания проекта:', error);
-      setError('Не удалось создать проект. Пожалуйста, попробуйте позже.');
+    } catch (err) {
+      console.error('Ошибка создания проекта:', err);
+      setError(`Ошибка ${isEditMode ? 'обновления' : 'создания'} проекта`);
     } finally {
       setLoading(false);
     }
@@ -52,7 +65,7 @@ const ProjectForm = ({ onSuccess }) => {
 
   return (
     <div className="project-form-container">
-      <h2>Новый проект</h2>
+      <h2>{isEditMode ? 'Редактировать проект' : 'Новый проект'}</h2>
       {error && <div className="error-message">{error}</div>}
       
       <form onSubmit={handleSubmit} className="project-form">
