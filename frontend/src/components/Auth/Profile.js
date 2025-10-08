@@ -1,272 +1,220 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Card from '../UI/Card';
+import NeonButton from '../UI/NeonButton';
 import api from '../../utils/api';
+import { AuthContext } from '../../context/AuthContext';
 import './Auth.css';
 
-const Profile = () => {
-  const navigate = useNavigate();
-  const [userData, setUserData] = useState({
-    id: '',
-    username: '',
-    email: '',
-    role: ''
-  });
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [loading, setLoading] = useState(true);
+export default function Profile() {
+  const { user: ctxUser, setUser: setCtxUser } = useContext(AuthContext || {});
+  const [user, setUser] = useState(ctxUser || null);
+  const [loading, setLoading] = useState(!ctxUser);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+  const navigate = useNavigate();
 
-  // Загрузка данных пользователя
   useEffect(() => {
-    const fetchUserData = async () => {
+    if (ctxUser) {
+      setUser(ctxUser);
+      setLoading(false);
+      return;
+    }
+    let mounted = true;
+    (async () => {
       try {
         setLoading(true);
-        const res = await api.get('/auth/me');
-        setUserData(res.data);
-        setFormData({
-          username: res.data.username,
-          email: res.data.email,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        });
-        setError(null);
+        const res = await api.get('/auth/me'); // если у тебя другой endpoint — поправь здесь
+        if (mounted) setUser(res.data || res);
       } catch (err) {
-        console.error('Ошибка при получении данных пользователя:', err);
-        setError('Не удалось загрузить данные профиля. Пожалуйста, попробуйте позже.');
-        
-        // Если токен недействителен, выходим из аккаунта
-        if (err.response && err.response.status === 401) {
-          handleLogout();
-        }
+        console.error('Ошибка получения профиля:', err);
+        if (mounted) setError('Не удалось загрузить профиль');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
-    };
+    })();
+    return () => { mounted = false; };
+  }, [ctxUser]);
 
-    fetchUserData();
-  }, []);
-
-  // Обработчик изменения полей формы
-  const onChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Функция обновления профиля
-  const onSubmit = async e => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      // Проверяем, меняется ли пароль
-      const updateData = {
-        username: formData.username,
-        email: formData.email
-      };
-
-      if (formData.newPassword) {
-        // Проверка совпадения паролей
-        if (formData.newPassword !== formData.confirmPassword) {
-          setError('Новый пароль и подтверждение не совпадают');
-          setLoading(false);
-          return;
-        }
-
-        // Если меняется пароль, добавляем текущий и новый пароли
-        updateData.currentPassword = formData.currentPassword;
-        updateData.newPassword = formData.newPassword;
-      }
-
-      const res = await api.put('/auth/update-profile', updateData);
-      
-      // Обновляем данные пользователя в localStorage
-      const currentUser = JSON.parse(localStorage.getItem('user'));
-      const updatedUser = {
-        ...currentUser,
-        username: res.data.username,
-        email: res.data.email
-      };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      
-      setUserData(res.data);
-      setSuccess('Профиль успешно обновлен');
-      setEditMode(false);
-      
-      // Очищаем поля пароля
-      setFormData(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }));
-    } catch (err) {
-      console.error('Ошибка при обновлении профиля:', err);
-      setError(
-        err.response?.data?.message || 
-        'Не удалось обновить профиль. Пожалуйста, проверьте введенные данные и попробуйте снова.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Функция выхода из аккаунта
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
-  if (loading && !editMode) {
-    return <div className="loading">Загрузка данных пользователя...</div>;
+  if (loading) {
+    return <div className="app-container"><Card className="card"><div className="small">Загрузка профиля...</div></Card></div>;
   }
 
+  if (!user) {
+    return <div className="app-container"><Card className="card error-message">Профиль не найден.</Card></div>;
+  }
+
+  const initial = (user.username || user.email || 'U')[0].toUpperCase();
+
+  const [form, setForm] = useState({
+    username: user.username || '',
+    email: user.email || '',
+    role: user.role || 'user',
+    bio: user.bio || ''
+  });
+
+  useEffect(() => {
+    setForm({
+      username: user.username || '',
+      email: user.email || '',
+      role: user.role || 'user',
+      bio: user.bio || ''
+    });
+  }, [user]);
+
+  function onChange(e) {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+
+  async function onSave() {
+    setError(null);
+    if (!form.username || !form.email) {
+      setError('Имя пользователя и email обязательны.');
+      return;
+    }
+    try {
+      setSaving(true);
+      // Попробуй endpoint /auth/me или /users/:id — при необходимости замени
+      const res = await api.post('/auth/update', form); // если у тебя PUT /auth/me — замени
+      const updated = res.data || res;
+      setUser(updated);
+      if (setCtxUser) setCtxUser(updated);
+      setEditing(false);
+    } catch (err) {
+      console.error('Ошибка сохранения профиля:', err);
+      setError('Не удалось сохранить профиль. Попробуйте позже.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // === Новый код: обработчик выхода ===
+  async function handleLogout() {
+    try {
+      // Попытка уведомить бэкенд о выходе — не критично
+      await api.post('/auth/logout').catch(() => {});
+    } catch (e) {
+      // игнорируем ошибки
+    }
+    localStorage.removeItem('token');
+    if (setCtxUser) setCtxUser(null);
+    navigate('/login');
+  }
+  // === /Новый код ===
+
   return (
-    <div className="profile-container">
-      <h2>Профиль пользователя</h2>
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
-      
-      {!editMode ? (
-        <div className="profile-info">
-          <div className="profile-avatar">
-            {/* Аватар или инициалы пользователя */}
-            <div className="avatar-placeholder">
-              {userData.username ? userData.username.charAt(0).toUpperCase() : '?'}
+    <div className="app-container">
+      <Card className="card" style={{ maxWidth: 940, margin: '0 auto', padding: 28 }}>
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 96, height: 96, borderRadius: 999, display:'flex', alignItems:'center',
+              justifyContent:'center', fontSize:40, fontWeight:700, color:'#061226',
+              background: 'linear-gradient(135deg, rgba(124,92,255,1), rgba(0,212,255,0.95))',
+              boxShadow: '0 10px 30px rgba(2,6,23,0.45)'
+            }}>{initial}</div>
+            <div>
+              <div className="neon-title" style={{ fontSize: 26 }}>{user.username || user.email}</div>
+              <div className="small" style={{ marginTop: 6 }}>{user.email}</div>
+              <div className="small" style={{ marginTop: 4 }}>Роль: <strong>{user.role}</strong></div>
             </div>
           </div>
-          
-          <div className="profile-details">
-            <div className="detail-item">
-              <span className="detail-label">Имя пользователя:</span>
-              <span className="detail-value">{userData.username}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Email:</span>
-              <span className="detail-value">{userData.email}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Роль:</span>
-              <span className="detail-value">
-                {userData.role === 'admin' && 'Администратор'}
-                {userData.role === 'manager' && 'Менеджер'}
-                {userData.role === 'engineer' && 'Инженер'}
-                {userData.role === 'observer' && 'Наблюдатель'}
-              </span>
-            </div>
-          </div>
-          
-          <div className="profile-actions">
-            <button 
-              className="btn btn-secondary"
-              onClick={() => setEditMode(true)}
-            >
-              Редактировать профиль
-            </button>
-            <button 
-              className="btn btn-danger"
+
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+            <NeonButton onClick={() => setEditing(v => !v)}>
+              {editing ? 'Отменить' : 'Редактировать профиль'}
+            </NeonButton>
+            <button className="btn btn-ghost" onClick={async () => {
+              // Быстрый экспорт/копия профиля
+              const txt = `Пользователь: ${user.username}\nEmail: ${user.email}\nРоль: ${user.role}`;
+              navigator.clipboard?.writeText(txt);
+            }}>Копировать</button>
+
+            {/* Кнопка выхода */}
+            <button
+              className="btn"
               onClick={handleLogout}
+              style={{ background: 'linear-gradient(135deg,#ff6b6b,#ff4d6d)', color: '#fff', borderRadius: 10 }}
             >
               Выйти
             </button>
           </div>
         </div>
-      ) : (
-        <form onSubmit={onSubmit} className="profile-form">
-          <div className="form-group">
-            <label htmlFor="username">Имя пользователя</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={onChange}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={onChange}
-              required
-            />
-          </div>
-          
-          <div className="password-section">
-            <h3>Изменение пароля</h3>
-            <p className="helper-text">Заполните поля ниже, только если хотите сменить пароль</p>
-            
-            <div className="form-group">
-              <label htmlFor="currentPassword">Текущий пароль</label>
-              <input
-                type="password"
-                id="currentPassword"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={onChange}
-              />
+
+        <hr style={{ border: 'none', height: 1, background: 'rgba(255,255,255,0.04)', margin: '12px 0 18px' }} />
+
+        {error && <div className="error-message" style={{ marginBottom: 12 }}>{error}</div>}
+
+        {!editing ? (
+          <div className="row" style={{ gap: 24 }}>
+            <div style={{ flex: 1 }}>
+              <div className="small field-label">Имя пользователя</div>
+              <div className="card" style={{ padding: 12 }}>{user.username}</div>
+
+              <div style={{ height: 12 }} />
+
+              <div className="small field-label">Email</div>
+              <div className="card" style={{ padding: 12 }}>{user.email}</div>
+
+              <div style={{ height: 12 }} />
+
+              <div className="small field-label">Bio</div>
+              <div className="card" style={{ padding: 12 }}>{user.bio || '—'}</div>
             </div>
-            
-            <div className="form-group">
-              <label htmlFor="newPassword">Новый пароль</label>
-              <input
-                type="password"
-                id="newPassword"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={onChange}
-                minLength="6"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Подтверждение пароля</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={onChange}
-                minLength="6"
-              />
+
+            <div style={{ width: 260 }}>
+              <div className="small field-label">Активность</div>
+              <div className="card" style={{ padding: 12 }}>
+                <div className="small">Создано проектов: <strong>{user.projects_count ?? '—'}</strong></div>
+                <div style={{ height: 8 }} />
+                <div className="small">Создано дефектов: <strong>{user.defects_count ?? '—'}</strong></div>
+              </div>
+
+              <div style={{ height: 12 }} />
+
+              <div className="small field-label">Быстрые действия</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-ghost" onClick={() => { /* перейти к проектам */ }}>Мои проекты</button>
+                <button className="btn btn-ghost" onClick={() => { /* перейти к дефектам */ }}>Мои дефекты</button>
+              </div>
             </div>
           </div>
-          
-          <div className="form-actions">
-            <button 
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setEditMode(false)}
-              disabled={loading}
-            >
-              Отмена
-            </button>
-            <button 
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? 'Сохранение...' : 'Сохранить изменения'}
-            </button>
+        ) : (
+          <div>
+            <div className="form-grid" style={{ marginBottom: 12 }}>
+              <div>
+                <label className="field-label">Имя пользователя</label>
+                <input name="username" value={form.username} onChange={onChange} className="input" />
+              </div>
+              <div>
+                <label className="field-label">Email</label>
+                <input name="email" value={form.email} onChange={onChange} className="input" />
+              </div>
+              <div>
+                <label className="field-label">Роль</label>
+                <select name="role" value={form.role} onChange={onChange} className="select">
+                  <option value="user">Пользователь</option>
+                  <option value="engineer">Инженер</option>
+                  <option value="admin">Админ</option>
+                </select>
+              </div>
+              <div>
+                <label className="field-label">Bio</label>
+                <input name="bio" value={form.bio} onChange={onChange} className="input" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              <NeonButton onClick={onSave} disabled={saving}>
+                {saving ? 'Сохраняю...' : 'Сохранить профиль'}
+              </NeonButton>
+              <button className="btn btn-ghost" onClick={() => { setEditing(false); setForm({ username: user.username, email: user.email, role: user.role, bio: user.bio }); }}>Отмена</button>
+            </div>
           </div>
-        </form>
-      )}
+        )}
+      </Card>
     </div>
   );
-};
-
-export default Profile;
+}

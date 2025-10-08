@@ -96,45 +96,72 @@ exports.updateProject = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, status, start_date, end_date } = req.body;
-    
+
     const result = await db.query(
-      `UPDATE projects 
-       SET name = $1, description = $2, status = $3, start_date = $4, end_date = $5 
-       WHERE id = $6 
-       RETURNING *`,
-      [name, description, status, start_date, end_date, id]
+      `UPDATE projects
+       SET name = $1,
+           description = $2,
+           status = $3,
+           start_date = $4,
+           end_date = $5
+       WHERE id = $6
+       RETURNING *;`,
+      [name, description, status, start_date || null, end_date || null, id]
     );
-    
-    if (result.rows.length === 0) {
+
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Проект не найден' });
     }
-    
-    res.status(200).json(result.rows[0]);
-  } catch (error) {
-    console.error('Ошибка при обновлении проекта:', error);
-    res.status(500).json({ message: 'Ошибка при обновлении проекта', error: error.message });
+
+    return res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Ошибка обновления проекта:', err);
+    return res.status(500).json({ message: 'Ошибка сервера' });
   }
 };
 
-// Удаление проекта
+// Получить дефекты проекта
+exports.getProjectDefects = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query(
+      `SELECT * FROM defects WHERE project_id = $1 ORDER BY created_at DESC;`,
+      [id]
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('Ошибка получения дефектов проекта:', err);
+    return res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+// Удалить проект
 exports.deleteProject = async (req, res) => {
   try {
-    const defectsCheck = await db.query('SELECT COUNT(*) FROM defects WHERE project_id = $1', [id]);
-    if (defectsCheck.rows[0].count > 0) {
-      return res.status(400).json({ 
-        message: 'Невозможно удалить проект, к которому привязаны дефекты' 
-      });
-    }
-    
-    const result = await db.query('DELETE FROM projects WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
+    const { id } = req.params;
+    // Удаляем проект (CASCADE должен убрать связанные дефекты/комментарии если настроено)
+    const result = await db.query(
+      `DELETE FROM projects WHERE id = $1 RETURNING *;`,
+      [id]
+    );
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Проект не найден' });
     }
-    
-    res.status(200).json({ message: 'Проект успешно удален', project: result.rows[0] });
-  } catch (error) {
-    console.error('Ошибка при удалении проекта:', error);
-    res.status(500).json({ message: 'Ошибка при удалении проекта', error: error.message });
+    return res.json({ message: 'Проект удалён', project: result.rows[0] });
+  } catch (err) {
+    console.error('Ошибка при удалении проекта:', err);
+    return res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+exports.getProjects = async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM projects ORDER BY created_at DESC;`
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('Ошибка получения списка проектов:', err);
+    return res.status(500).json({ message: 'Ошибка сервера' });
   }
 };

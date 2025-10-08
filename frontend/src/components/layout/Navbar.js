@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './Navbar.css';
+import './Navbar.css'; // оставляем существующие стили, добавим новые классы
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -15,63 +15,25 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <Link to="/" className="navbar-logo">
-          СистемаКонтроля
-        </Link>
-        
-        <ul className="navbar-menu">
-          <li className="navbar-item">
-            <Link to="/projects" className="navbar-link">Проекты</Link>
-          </li>
-          <li className="navbar-item">
-            <Link to="/defects" className="navbar-link">Дефекты</Link>
-          </li>
-          {/* Добавляем ссылку на управление пользователями только для администраторов */}
-          {user && user.role === 'admin' && (
-            <li className="navbar-item">
-              <Link to="/admin/users" className="navbar-link">Пользователи</Link>
-            </li>
-          )}
-          {user && (user.role === 'manager' || user.role === 'admin') && (
-            <li className="navbar-item">
-              <Link to="/reports" className="navbar-link">Отчеты</Link>
-            </li>
-          )}
-        </ul>
-        
-        {user && (
-          <div className="navbar-user">
-            <div 
-              className="user-profile-container" 
-              onClick={() => setShowDropdown(!showDropdown)}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
-              tabIndex="0"
-            >
-              <div className="user-avatar">
-                {user.username ? user.username.charAt(0).toUpperCase() : 'У'}
-              </div>
-              <span className="user-name">{user.username}</span>
-              <i className={`fa fa-chevron-down ${showDropdown ? 'rotate' : ''}`}></i>
-              
-              {showDropdown && (
-                <div className="user-dropdown">
-                  <Link to="/profile" className="dropdown-item">
-                    <i className="fas fa-user"></i> Мой профиль
-                  </Link>
-                  <hr className="dropdown-divider" />
-                  <button onClick={handleLogout} className="dropdown-item logout-button">
-                    <i className="fas fa-sign-out-alt"></i> Выйти
-                  </button>
-                </div>
-              )}
-            </div>
-            
-          </div>
-        )}
+    <header style={{position:'relative', zIndex:3}} className="card row" >
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <div style={{
+          width:44, height:44, borderRadius:12,
+          background: 'linear-gradient(135deg, rgba(124,92,255,0.95), rgba(0,212,255,0.9))',
+          boxShadow:'0 8px 28px rgba(124,92,255,0.12)',
+          display:'flex',alignItems:'center',justifyContent:'center', fontWeight:800, color:'#061226'
+        }}>
+          M
+        </div>
+        <Link to="/" className="neon-title" style={{textDecoration:'none'}}>Manager+</Link>
       </div>
-    </nav>
+
+      <nav style={{display:'flex',gap:12, alignItems:'center'}}>
+        <Link to="/projects" className="small" style={{color:'var(--muted)'}}>Проекты</Link>
+        <Link to="/defects" className="small" style={{color:'var(--muted)'}}>Дефекты</Link>
+        <Link to="/profile" className="small" style={{color:'var(--muted)'}}>Профиль</Link>
+      </nav>
+    </header>
   );
 };
 

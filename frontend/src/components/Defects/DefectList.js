@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import Card from '../UI/Card';
+import NeonButton from '../UI/NeonButton';
 import api from '../../utils/api';
 import './Defects.css';
 
@@ -10,16 +12,11 @@ const DefectList = () => {
   const [currentProject, setCurrentProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Фильтры
-  const [filters, setFilters] = useState({
-    status: '',
-    priority: '',
-    project_id: projectId || '', // Используем projectId из URL
-    search: '',
-  });
+  const [q, setQ] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -60,6 +57,7 @@ const DefectList = () => {
     };
 
     fetchData();
+    return () => { mounted = false; };
   }, [projectId, filters.status, filters.priority, filters.project_id]);
 
   const handleFilterChange = (e) => {
@@ -219,60 +217,30 @@ const DefectList = () => {
           <p>Дефекты не найдены. {!projectId && 'Выберите другие параметры фильтрации или'} создайте новый дефект.</p>
         </div>
       ) : (
-        <div className="defect-cards">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {filteredDefects.map(defect => (
-            <div key={defect.id} className="defect-card">
-              <h3>
-                <Link to={`/defects/${defect.id}`}>{defect.title}</Link>
-              </h3>
-              
-              <div className="defect-meta">
-                <span className={`defect-priority priority-${defect.priority}`}>
-                  {getPriorityLabel(defect.priority)}
-                </span>
-                <span className={`defect-status status-${defect.status}`}>
-                  {getStatusLabel(defect.status)}
-                </span>
+            <Card key={defect.id} className="defect-card fade-in-up" style={{ padding: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <Link to={`/defects/${defect.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-1)' }}>{defect.title}</div>
+                  </Link>
+                  <div style={{ marginTop: 8 }}>
+                    <span className={`badge ${defect.priority?.toLowerCase() || ''}`} style={{ marginRight: 8 }}>{defect.priority || '—'}</span>
+                    <span className={`status ${defect.status?.toLowerCase() || ''}`} style={{ marginLeft: 8 }}>{defect.status || '—'}</span>
+                  </div>
+                  <div style={{ marginTop: 10 }} className="small">Проект: {defect.project_name || defect.project_id || '—'}</div>
+                  <div className="small" style={{ marginTop: 6 }}>Исполнитель: {defect.assigned_to_name || 'Не назначено'}</div>
+                </div>
+
+                <div style={{ display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
+                  <NeonButton onClick={() => navigate(`/defects/${defect.id}`)}>Открыть</NeonButton>
+                  <Link to={`/defects/${defect.id}/edit`} style={{ textDecoration:'none' }}>
+                    <button className="btn btn-ghost" style={{ minWidth: 96 }}>Ред.</button>
+                  </Link>
+                </div>
               </div>
-              
-              {defect.project_name && !projectId && (
-                <div className="defect-project">
-                  <span className="meta-label">Проект:</span>
-                  <Link to={`/projects/${defect.project_id}`}>{defect.project_name}</Link>
-                </div>
-              )}
-              
-              {defect.assigned_to_name && (
-                <div className="defect-assigned">
-                  <span className="meta-label">Исполнитель:</span>
-                  <span>{defect.assigned_to_name}</span>
-                </div>
-              )}
-              
-              {defect.description && (
-                <div className="defect-description-preview">
-                  {defect.description.length > 150
-                    ? `${defect.description.substring(0, 150)}...`
-                    : defect.description}
-                </div>
-              )}
-              
-              <div className="defect-footer">
-                <div className="defect-dates">
-                  <span className="defect-created">
-                    {new Date(defect.created_at).toLocaleDateString()}
-                  </span>
-                  {defect.deadline && (
-                    <span className="defect-deadline">
-                      До: {new Date(defect.deadline).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-                <Link to={`/defects/${defect.id}`} className="btn btn-info btn-sm">
-                  Подробнее
-                </Link>
-              </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

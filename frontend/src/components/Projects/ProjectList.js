@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import Card from '../UI/Card';
+import NeonButton from '../UI/NeonButton';
 import api from '../../utils/api';
 import './Projects.css';
 
@@ -7,33 +9,19 @@ const ProjectList = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
         const res = await api.get('/projects');
-        
-        // Проверяем формат ответа и выбираем правильные данные
-        if (Array.isArray(res.data)) {
-          setProjects(res.data);
-        } else if (res.data && Array.isArray(res.data.projects)) {
-          setProjects(res.data.projects);
-        } else if (res.data && typeof res.data === 'object') {
-          // Если пришёл объект, преобразуем в массив для отображения
-          console.log("Получены данные:", res.data);
-          setProjects([]);  // Временно установим пустой массив
-        } else {
-          // Если формат данных совсем не тот, который ожидаем
-          console.error("Неожиданный формат данных:", res.data);
-          setProjects([]);
-        }
-        
-        setError(null);
+        // если api.get возвращает { data: [...] }
+        const data = res.data ?? res;
+        setProjects(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error('Ошибка загрузки проектов:', err);
-        setError('Не удалось загрузить проекты. Пожалуйста, попробуйте позже.');
-        setProjects([]);  // Устанавливаем пустой массив при ошибке
+        console.error(err);
+        setError('Не удалось загрузить проекты');
       } finally {
         setLoading(false);
       }
@@ -41,6 +29,11 @@ const ProjectList = () => {
 
     fetchProjects();
   }, []);
+
+  function openProject(projectId) {
+    // переходит на страницу проекта; убедитесь, что маршрут /projects/:id настроен
+    navigate(`/projects/${projectId}`);
+  }
 
   return (
     <div className="project-list-container">
@@ -62,37 +55,27 @@ const ProjectList = () => {
       ) : (
         <div className="project-grid">
           {projects.map(project => (
-            <div key={project.id} className="project-card">
-              <h3>
-                <Link to={`/projects/${project.id}`}>{project.name}</Link>
-              </h3>
-              <p className="project-description">{project.description}</p>
-              
-              <div className="project-meta">
-                <span className={`project-status status-${project.status}`}>
-                  {project.status === 'active' && 'Активен'}
-                  {project.status === 'completed' && 'Завершен'}
-                  {project.status === 'suspended' && 'Приостановлен'}
-                </span>
-                <span className="project-date">
-                  Начало: {new Date(project.start_date).toLocaleDateString()}
-                </span>
-                {project.end_date && (
-                  <span className="project-date">
-                    Окончание: {new Date(project.end_date).toLocaleDateString()}
-                  </span>
-                )}
+            <Card key={project.id} className="project-card fade-in-up">
+              <div className="row" style={{justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div>
+                  <div className="neon-title">
+                    <Link to={`/projects/${project.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      {project.name}
+                    </Link>
+                  </div>
+                  <div className="meta small">{project.description}</div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div className="small">{project.start_date ? new Date(project.start_date).toLocaleDateString() : ''}</div>
+                  <div className="small">{project.end_date ? new Date(project.end_date).toLocaleDateString() : ''}</div>
+                </div>
               </div>
-              
-              <div className="project-actions">
-                <Link to={`/projects/${project.id}`} className="btn btn-info btn-sm">
-                  Подробнее
-                </Link>
-                <Link to={`/projects/${project.id}/defects`} className="btn btn-secondary btn-sm">
-                  Дефекты
-                </Link>
+              <div style={{marginTop:12}} className="row">
+                <NeonButton onClick={() => openProject(project.id)}>Открыть</NeonButton>
+                <div className="spacer" />
+                <div className="small">{project.status}</div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

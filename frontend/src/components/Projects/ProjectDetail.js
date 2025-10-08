@@ -1,146 +1,149 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import Card from '../UI/Card';
+import NeonButton from '../UI/NeonButton';
 import api from '../../utils/api';
 import './Projects.css';
 
-const ProjectDetail = () => {
+export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [defects, setDefects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [err, setErr] = useState(null);
 
   useEffect(() => {
-    const fetchProjectData = async () => {
+    let mounted = true;
+    async function load() {
       try {
         setLoading(true);
-        
-        // Получаем информацию о проекте
-        const projectResponse = await api.get(`/projects/${id}`);
-        setProject(projectResponse.data);
-        
-        // Получаем связанные дефекты
-        const defectsResponse = await api.get(`/defects?project_id=${id}`);
-        setDefects(defectsResponse.data);
-        
-        setError(null);
-      } catch (err) {
-        console.error('Ошибка загрузки данных проекта:', err);
-        setError('Не удалось загрузить проект. Пожалуйста, попробуйте позже.');
+        const resP = await api.get(`/projects/${id}`);
+        const proj = resP.data ?? resP;
+        const resD = await api.get(`/projects/${id}/defects`).catch(async () => {
+          // fallback если endpoint другой
+          const r2 = await api.get(`/defects?project_id=${id}`).catch(() => ({ data: [] }));
+          return r2;
+        });
+        const def = (resD.data ?? resD) || [];
+        if (!mounted) return;
+        setProject(proj);
+        setDefects(Array.isArray(def) ? def : []);
+      } catch (e) {
+        console.error(e);
+        if (mounted) setErr('Не удалось загрузить проект');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
-    };
-
-    fetchProjectData();
+    }
+    load();
+    return () => { mounted = false; };
   }, [id]);
 
-  const handleDelete = async () => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот проект?')) {
-      return;
-    }
-    
+  if (loading) {
+    return <div className="app-container"><Card className="card"><div className="small">Загрузка...</div></Card></div>;
+  }
+
+  if (err || !project) {
+    return <div className="app-container"><Card className="card error-message">{err || 'Проект не найден'}</Card></div>;
+  }
+
+  const formatDate = (d) => d ? new Date(d).toLocaleString() : '—';
+
+  const statusClass = (s) => {
+    if (!s) return 'badge';
+    const key = s.toString().toLowerCase();
+    if (key.includes('pause') || key.includes('приост')) return 'badge medium';
+    if (key.includes('active') || key.includes('актив')) return 'badge low';
+    if (key.includes('done') || key.includes('заверш')) return 'badge high';
+    return 'badge';
+  };
+
+  async function handleDelete() {
+    if (!confirm('Удалить проект? Это действие необратимо.')) return;
     try {
       await api.delete(`/projects/${id}`);
       navigate('/projects');
-    } catch (err) {
-      console.error('Ошибка удаления проекта:', err);
-      setError(
-        err.response?.data?.message || 
-        'Не удалось удалить проект. Пожалуйста, попробуйте позже.'
-      );
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при удалении проекта');
     }
-  };
-
-  if (loading) {
-    return <div className="loading">Загрузка данных проекта...</div>;
-  }
-
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
-
-  if (!project) {
-    return <div className="error-message">Проект не найден</div>;
   }
 
   return (
-    <div className="project-detail-container">
-      <div className="project-detail-header">
-        <h2>{project.name}</h2>
-        <div className="project-detail-actions">
-          <Link to={`/projects/${id}/edit`} className="btn btn-secondary">
-            Редактировать
-          </Link>
-          <button onClick={handleDelete} className="btn btn-danger">
-            Удалить
-          </button>
+    <div className="app-container">
+      <Card className="card" style={{ padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div className="neon-title" style={{ fontSize: 28, marginBottom: 6 }}>
+              {project.name}
+            </div>
+            <div className="small meta" style={{ color: 'var(--muted)' }}>{project.description}</div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link to={`/projects/${id}/edit`} style={{ textDecoration: 'none' }}>
+              <NeonButton>Редактировать</NeonButton>
+            </Link>
+
+            <button
+              className="btn"
+              onClick={handleDelete}
+              style={{ background: 'linear-gradient(135deg,#ff6b6b,#ff4d6d)', color: '#fff', borderRadius: 10 }}
+            >
+              Удалить
+            </button>
+          </div>
         </div>
-      </div>
-      
-      <div className="project-detail-meta">
-        <div className={`project-status status-${project.status}`}>
-          {project.status === 'active' && 'Активен'}
-          {project.status === 'completed' && 'Завершен'}
-          {project.status === 'suspended' && 'Приостановлен'}
+
+        <hr style={{ border: 'none', height: 1, background: 'rgba(255,255,255,0.04)', margin: '18px 0' }} />
+
+        <div className="row" style={{ gap: 18, alignItems: 'center', marginBottom: 12 }}>
+          <div className={statusClass(project.status)} style={{ padding: '8px 12px' }}>{project.status || '—'}</div>
+          <div className="small">Начало: {formatDate(project.start_date)}</div>
+          <div className="small">Окончание: {formatDate(project.end_date)}</div>
+          <div className="spacer" />
         </div>
-        <div className="project-dates">
-          <span>Начало: {new Date(project.start_date).toLocaleDateString()}</span>
-          {project.end_date && (
-            <span>Окончание: {new Date(project.end_date).toLocaleDateString()}</span>
+
+        <h3 style={{ marginTop: 8 }}>Описание</h3>
+        <Card className="card" style={{ padding: 16, marginBottom: 18 }}>
+          <div style={{ color: 'var(--muted)' }}>{project.description || '—'}</div>
+        </Card>
+
+        <hr style={{ border: 'none', height: 1, background: 'rgba(255,255,255,0.04)', margin: '8px 0 18px' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3>Дефекты ({defects.length})</h3>
+          <div>
+            <NeonButton onClick={() => navigate(`/projects/${id}/defects/new`)} style={{ boxShadow: '0 18px 40px rgba(124,92,255,0.12)' }}>
+              Новый дефект
+            </NeonButton>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          {defects.length === 0 ? (
+            <div className="small">Дефекты не найдены.</div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+              {defects.map(d => (
+                <Card key={d.id} className="defect-card fade-in-up" style={{ padding: 14 }}>
+                  <div style={{ flex: 1 }}>
+                    <Link to={`/defects/${d.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-1)' }}>{d.title}</div>
+                    </Link>
+                    <div style={{ marginTop: 8 }}>
+                      <span className={`badge ${d.priority?.toLowerCase() || ''}`} style={{ marginRight: 8 }}>{d.priority || '—'}</span>
+                      <span className={`status ${d.status?.toLowerCase() || ''}`} style={{ marginLeft: 8 }}>{d.status || '—'}</span>
+                    </div>
+                    <div style={{ marginTop: 10 }} className="small">Исполнитель: {d.assignee || d.assignee_id || 'Не назначено'}</div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
-      </div>
-      
-      <div className="project-detail-description">
-        <h3>Описание</h3>
-        <p>{project.description || 'Описание отсутствует'}</p>
-      </div>
-      
-      <div className="project-defects">
-        <div className="defects-header">
-          <h3>Дефекты ({defects.length})</h3>
-          <Link to={`/projects/${id}/defects/new`} className="btn btn-primary">
-            Новый дефект
-          </Link>
-        </div>
-        
-        {defects.length === 0 ? (
-          <div className="no-data">Дефекты не найдены</div>
-        ) : (
-          <div className="defects-list">
-            {defects.map(defect => (
-              <div key={defect.id} className="defect-card">
-                <h4>
-                  <Link to={`/defects/${defect.id}`}>{defect.title}</Link>
-                </h4>
-                <div className="defect-meta">
-                  <span className={`defect-priority priority-${defect.priority}`}>
-                    {defect.priority === 'high' && 'Высокий'}
-                    {defect.priority === 'medium' && 'Средний'}
-                    {defect.priority === 'low' && 'Низкий'}
-                  </span>
-                  <span className={`defect-status status-${defect.status}`}>
-                    {defect.status === 'new' && 'Новый'}
-                    {defect.status === 'in_progress' && 'В работе'}
-                    {defect.status === 'review' && 'На проверке'}
-                    {defect.status === 'closed' && 'Закрыт'}
-                    {defect.status === 'cancelled' && 'Отменен'}
-                  </span>
-                </div>
-                {defect.assigned_to_name && (
-                  <div className="defect-assigned">
-                    Исполнитель: {defect.assigned_to_name}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      </Card>
     </div>
   );
-};
-
-export default ProjectDetail;
+}

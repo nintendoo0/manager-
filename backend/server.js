@@ -62,7 +62,7 @@ module.exports = app;
 
 // Проверьте, что маршруты правильно импортированы
 const authRoutes = require('./routes/authRoutes');
-const projectRoutes = require('./routes/projectRoutes');
+const projectRoutes = require('./routes/project');
 const defectRoutes = require('./routes/defects'); // Изменено с defectRoutes на defects
 
 // Убедитесь, что эти строки присутствуют перед объявлением маршрутов

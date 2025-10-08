@@ -1,142 +1,164 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import Card from '../UI/Card';
+import NeonButton from '../UI/NeonButton';
+import api from '../../utils/api';
 import './Projects.css';
-import { apiClient } from '../../api/client';
 
-const ProjectForm = ({ onSuccess }) => {
+export default function ProjectForm() {
+  const { id } = useParams(); // если есть id — режим редактирования
+  const isEdit = Boolean(id);
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+
+  const [form, setForm] = useState({
     name: '',
     description: '',
     status: 'active',
-    start_date: new Date().toISOString().split('T')[0],
+    start_date: '',
     end_date: ''
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const { name, description, status, start_date, end_date } = formData;
-
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    try {
-      console.log('Отправка данных проекта:', formData);
-      
-      const result = await apiClient.post('/api/projects', formData);
-      
-      console.log('Проект успешно создан:', result);
-      // Очистка формы или редирект на список проектов
-      if (onSuccess) {
-        onSuccess(result);
+  useEffect(() => {
+    let mounted = true;
+    if (!isEdit) return;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await api.get(`/projects/${id}`);
+        const project = res.data ?? res;
+        if (!mounted) return;
+        setForm({
+          name: project.name || '',
+          description: project.description || '',
+          status: project.status || 'active',
+          start_date: project.start_date ? formatForInput(project.start_date) : '',
+          end_date: project.end_date ? formatForInput(project.end_date) : ''
+        });
+      } catch (err) {
+        console.error('Ошибка загрузки проекта:', err);
+        setError('Не удалось загрузить проект для редактирования');
+      } finally {
+        if (mounted) setLoading(false);
       }
-      
-      // Перенаправляем пользователя на страницу списка проектов
-      navigate('/projects');
-      
-    } catch (error) {
-      console.error('Ошибка создания проекта:', error);
-      setError('Не удалось создать проект. Пожалуйста, попробуйте позже.');
-    } finally {
-      setLoading(false);
+    })();
+    return () => { mounted = false; };
+  }, [id, isEdit]);
+
+  function formatForInput(value) {
+    const d = new Date(value);
+    if (isNaN(d)) return '';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function onChange(e) {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    if (!form.name.trim()) {
+      setError('Название проекта обязательно.');
+      return;
     }
-  };
+
+    try {
+      setSaving(true);
+      if (isEdit) {
+        // ожидается, что бэкенд поддерживает PUT /projects/:id
+        const res = await api.put(`/projects/${id}`, form);
+        const updated = res.data ?? res;
+        navigate(`/projects/${id}`);
+      } else {
+        const res = await api.post('/projects', form);
+        const created = res.data ?? res;
+        const newId = created.id ?? created._id ?? created.project_id;
+        navigate(newId ? `/projects/${newId}` : '/projects');
+      }
+    } catch (err) {
+      console.error('Ошибка сохранения проекта:', err);
+      setError('Не удалось сохранить проект. Проверьте данные и попробуйте снова.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="app-container">
+        <Card className="card"><div className="small">Загрузка данных проекта...</div></Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="project-form-container">
-      <h2>Новый проект</h2>
-      {error && <div className="error-message">{error}</div>}
-      
-      <form onSubmit={handleSubmit} className="project-form">
-        <div className="form-group">
-          <label htmlFor="name">Название проекта</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="description">Описание</label>
-          <textarea
-            id="description"
-            name="description"
-            value={description}
-            onChange={handleChange}
-            rows="4"
-          ></textarea>
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="status">Статус</label>
-          <select
-            id="status"
-            name="status"
-            value={status}
-            onChange={handleChange}
-          >
-            <option value="active">Активен</option>
-            <option value="suspended">Приостановлен</option>
-            <option value="completed">Завершен</option>
-          </select>
-        </div>
-        
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="start_date">Дата начала</label>
-            <input
-              type="date"
-              id="start_date"
-              name="start_date"
-              value={start_date}
-              onChange={handleChange}
-              required
-            />
+    <div className="app-container">
+      <Card className="card" style={{ maxWidth: 900, margin: '0 auto', padding: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div>
+            <div className="neon-title" style={{ fontSize: 22 }}>{isEdit ? 'Редактирование проекта' : 'Новый проект'}</div>
+            <div className="small" style={{ color: 'var(--muted)' }}>{isEdit ? `ID: ${id}` : 'Создать новый проект'}</div>
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="end_date">Дата окончания</label>
-            <input
-              type="date"
-              id="end_date"
-              name="end_date"
-              value={end_date}
-              onChange={handleChange}
-            />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link to="/projects" className="btn btn-ghost" style={{ textDecoration: 'none' }}>Назад</Link>
+            <NeonButton onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Сохраняю...' : (isEdit ? 'Сохранить' : 'Создать')}
+            </NeonButton>
           </div>
         </div>
-        
-        <div className="form-actions">
-          <button 
-            type="button" 
-            className="btn btn-secondary"
-            onClick={() => navigate('/projects')}
-          >
-            Отмена
-          </button>
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={loading}
-          >
-            {loading ? 'Создание...' : 'Создать проект'}
-          </button>
-        </div>
-      </form>
+
+        <hr style={{ border: 'none', height: 1, background: 'rgba(255,255,255,0.04)', margin: '12px 0' }} />
+
+        {error && <div className="error-message" style={{ marginBottom: 12 }}>{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label className="field-label">Название</label>
+              <input name="name" value={form.name} onChange={onChange} className="input" placeholder="Название проекта" />
+            </div>
+
+            <div>
+              <label className="field-label">Описание</label>
+              <textarea name="description" value={form.description} onChange={onChange} className="textarea" rows={4} placeholder="Краткое описание проекта" />
+            </div>
+
+            <div className="form-grid">
+              <div>
+                <label className="field-label">Статус</label>
+                <select name="status" value={form.status} onChange={onChange} className="select">
+                  <option value="active">Активен</option>
+                  <option value="paused">Приостановлен</option>
+                  <option value="done">Завершён</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Начало</label>
+                  <input name="start_date" type="date" value={form.start_date} onChange={onChange} className="input" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label">Окончание</label>
+                  <input name="end_date" type="date" value={form.end_date} onChange={onChange} className="input" />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
+              <NeonButton type="submit" disabled={saving}>{saving ? 'Сохраняю...' : (isEdit ? 'Сохранить изменения' : 'Создать проект')}</NeonButton>
+              <Link to={isEdit ? `/projects/${id}` : '/projects'} className="btn btn-ghost" style={{ alignSelf: 'center' }}>Отмена</Link>
+            </div>
+          </div>
+        </form>
+      </Card>
     </div>
   );
-};
-
-export default ProjectForm;
+}
