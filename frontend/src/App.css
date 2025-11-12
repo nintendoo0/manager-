@@ -24,6 +24,17 @@ body {
   padding-top: 70px; /* Обеспечивает отступ от навбара */
   width: 100%;
   box-sizing: border-box;
+  padding: 0 24px;        /* отступы по бокам на мобильных */
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* На больших экранах увеличиваем отступы и ограничиваем ширину контента */
+@media (min-width: 1200px) {
+  .page-container {
+    padding: 0 48px;
+    max-width: 1280px;
+  }
 }
 
 /* Общие стили */

@@ -30,7 +30,7 @@ function requireAdmin(req, res, next) {
 
 // Middleware для проверки прав на создание дефектов (разрешено admin и engineer)
 function canCreateDefects(req, res, next) {
-  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'engineer')) {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
     return res.status(403).json({ message: 'Доступ запрещен. Недостаточно прав для создания дефектов.' });
   }
   next();

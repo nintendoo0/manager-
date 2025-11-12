@@ -43,59 +43,61 @@ const ProjectList = () => {
   }, []);
 
   return (
-    <div className="project-list-container">
-      <div className="project-header">
-        <h2>Проекты</h2>
-        <Link to="/projects/new" className="btn btn-primary">
-          <i className="fas fa-plus"></i> Новый проект
-        </Link>
-      </div>
+    <div className="page-container">
+      <div className="project-list-container">
+        <div className="project-header">
+          <h2>Проекты</h2>
+          <Link to="/projects/new" className="btn btn-primary">
+            <i className="fas fa-plus"></i> Новый проект
+          </Link>
+        </div>
 
-      {loading ? (
-        <div className="loading">Загрузка проектов...</div>
-      ) : error ? (
-        <div className="error-message">{error}</div>
-      ) : projects.length === 0 ? (
-        <div className="no-data">
-          <p>Проекты не найдены. Создайте новый проект.</p>
-        </div>
-      ) : (
-        <div className="project-grid">
-          {projects.map(project => (
-            <div key={project.id} className="project-card">
-              <h3>
-                <Link to={`/projects/${project.id}`}>{project.name}</Link>
-              </h3>
-              <p className="project-description">{project.description}</p>
-              
-              <div className="project-meta">
-                <span className={`project-status status-${project.status}`}>
-                  {project.status === 'active' && 'Активен'}
-                  {project.status === 'completed' && 'Завершен'}
-                  {project.status === 'suspended' && 'Приостановлен'}
-                </span>
-                <span className="project-date">
-                  Начало: {new Date(project.start_date).toLocaleDateString()}
-                </span>
-                {project.end_date && (
-                  <span className="project-date">
-                    Окончание: {new Date(project.end_date).toLocaleDateString()}
+        {loading ? (
+          <div className="loading">Загрузка проектов...</div>
+        ) : error ? (
+          <div className="error-message">{error}</div>
+        ) : projects.length === 0 ? (
+          <div className="no-data">
+            <p>Проекты не найдены. Создайте новый проект.</p>
+          </div>
+        ) : (
+          <div className="project-grid">
+            {projects.map(project => (
+              <div key={project.id} className="project-card">
+                <h3>
+                  <Link to={`/projects/${project.id}`}>{project.name}</Link>
+                </h3>
+                <p className="project-description">{project.description}</p>
+                
+                <div className="project-meta">
+                  <span className={`project-status status-${project.status}`}>
+                    {project.status === 'active' && 'Активен'}
+                    {project.status === 'completed' && 'Завершен'}
+                    {project.status === 'suspended' && 'Приостановлен'}
                   </span>
-                )}
+                  <span className="project-date">
+                    Начало: {new Date(project.start_date).toLocaleDateString()}
+                  </span>
+                  {project.end_date && (
+                    <span className="project-date">
+                      Окончание: {new Date(project.end_date).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="project-actions">
+                  <Link to={`/projects/${project.id}`} className="btn btn-info btn-sm">
+                    Подробнее
+                  </Link>
+                  <Link to={`/projects/${project.id}/defects`} className="btn btn-secondary btn-sm">
+                    Дефекты
+                  </Link>
+                </div>
               </div>
-              
-              <div className="project-actions">
-                <Link to={`/projects/${project.id}`} className="btn btn-info btn-sm">
-                  Подробнее
-                </Link>
-                <Link to={`/projects/${project.id}/defects`} className="btn btn-secondary btn-sm">
-                  Дефекты
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
