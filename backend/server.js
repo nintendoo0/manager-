@@ -89,3 +89,4 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', projectRoutes);
 app.use('/api/defects', defectRoutes); // Теперь это будет работать
 app.use('/api/reports', reportRoutes); // Добавлено
+app.use('/api/dashboard', require('./routes/dashboardRoutes')); // Маршруты дэшборда

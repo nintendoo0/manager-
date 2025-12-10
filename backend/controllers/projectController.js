@@ -22,6 +22,23 @@ exports.createProject = async (req, res) => {
       end_date = `${year}-${month}-${day}`;
     }
     
+    // Валидация дат
+    if (start_date && end_date) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+      
+      if (endDate < startDate) {
+        return res.status(400).json({ 
+          message: 'Дата окончания проекта не может быть раньше даты начала' 
+        });
+      }
+    }
+    
+    // Проверка обязательных полей
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Название проекта обязательно' });
+    }
+    
     console.log('Данные для вставки:', { name, description, status, start_date, end_date });
     
     // Вставка в БД
@@ -96,6 +113,23 @@ exports.updateProject = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, status, start_date, end_date } = req.body;
+    
+    // Валидация дат
+    if (start_date && end_date) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+      
+      if (endDate < startDate) {
+        return res.status(400).json({ 
+          message: 'Дата окончания проекта не может быть раньше даты начала' 
+        });
+      }
+    }
+    
+    // Проверка обязательных полей
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Название проекта обязательно' });
+    }
     
     const result = await db.query(
       `UPDATE projects 

@@ -7,10 +7,14 @@ import './Projects.css';
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [project, setProject] = useState(null);
   const [defects, setDefects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Проверка прав на управление проектами (только admin и manager)
+  const canManageProjects = user && (user.role === 'admin' || user.role === 'manager');
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -64,17 +68,18 @@ const ProjectDetail = () => {
   }
 
   return (
-    <div className="project-detail-container">
-      <div className="project-detail-header">
+    <div className="project-detail-container">      <div className="project-detail-header">
         <h2>{project.name}</h2>
-        <div className="project-detail-actions">
-          <Link to={`/projects/${id}/edit`} className="btn btn-secondary">
-            Редактировать
-          </Link>
-          <button onClick={handleDelete} className="btn btn-danger">
-            Удалить
-          </button>
-        </div>
+        {canManageProjects && (
+          <div className="project-detail-actions">
+            <Link to={`/projects/${id}/edit`} className="btn btn-secondary">
+              Редактировать
+            </Link>
+            <button onClick={handleDelete} className="btn btn-danger">
+              Удалить
+            </button>
+          </div>
+        )}
       </div>
       
       <div className="project-detail-meta">

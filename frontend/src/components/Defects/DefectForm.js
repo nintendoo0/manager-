@@ -70,15 +70,34 @@ const DefectForm = () => {
 
     fetchInitialData();
   }, [id, isEditMode, projectId, user]);
-
   const onChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const validateDeadline = () => {
+    if (formData.deadline) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Сбрасываем время для корректного сравнения
+      const deadlineDate = new Date(formData.deadline);
+      
+      if (deadlineDate < today) {
+        setError('Срок исполнения не может быть раньше текущей даты');
+        return false;
+      }
+    }
+    return true;
   };
 
   const onSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Валидация срока исполнения
+    if (!validateDeadline()) {
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isEditMode) {
@@ -210,8 +229,7 @@ const DefectForm = () => {
             </select>
           </div>
         </div>
-        
-        <div className="form-group">
+          <div className="form-group">
           <label htmlFor="deadline">Срок исполнения</label>
           <input
             type="date"
@@ -219,7 +237,13 @@ const DefectForm = () => {
             name="deadline"
             value={formData.deadline}
             onChange={onChange}
+            min={new Date().toISOString().split('T')[0]} // Минимальная дата - сегодня
           />
+          {formData.deadline && new Date(formData.deadline) < new Date(new Date().setHours(0, 0, 0, 0)) && (
+            <small style={{ color: '#e74c3c', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+              ⚠️ Срок исполнения не может быть раньше текущей даты
+            </small>
+          )}
         </div>
         
         <div className="form-actions">

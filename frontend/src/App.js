@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Profile from './components/Auth/Profile';
+import Dashboard from './components/Dashboard/Dashboard';
 import ProjectList from './components/Projects/ProjectList';
 import ProjectDetail from './components/Projects/ProjectDetail';
 import ProjectForm from './components/Projects/ProjectForm';
@@ -62,13 +63,22 @@ function App() {
                   </AdminRoute>
                 } 
               />
-              
-              {/* Защищенные маршруты */}
+                {/* Защищенные маршруты */}
               <Route 
                 path="/" 
                 element={
                   <PrivateRoute>
-                    <ProjectList />
+                    <Dashboard />
+                  </PrivateRoute>
+                } 
+              />
+              
+              {/* Дэшборд */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
                   </PrivateRoute>
                 } 
               />

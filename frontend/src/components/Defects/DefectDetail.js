@@ -120,24 +120,22 @@ const DefectDetail = () => {
             </button>
           )}
         </div>
-      </div>
-
-      <div className="defect-info">
+      </div>      <div className="defect-info">
         <div>
           <span>Статус:</span>
           <span className={`status-badge ${defect.status}`}>{getStatusLabel(defect.status)}</span>
         </div>
         <div>
           <span>Приоритет:</span>
-          <span className={`priority-badge ${defect.priority}`}>{defect.priority}</span>
+          <span className={`priority-badge ${defect.priority}`}>{getPriorityLabel(defect.priority)}</span>
         </div>
         <div>
           <span>Проект:</span>
-          <span>{defect.project_name || 'Общага'}</span>
+          <span>{defect.project_name || 'Не указан'}</span>
         </div>
         <div>
           <span>Создан:</span>
-          <span>{new Date(defect.created_at).toLocaleString()}</span>
+          <span>{new Date(defect.created_at).toLocaleString('ru-RU')}</span>
         </div>
         <div>
           <span>Создал:</span>
@@ -146,12 +144,17 @@ const DefectDetail = () => {
         <div>
           <span>Назначено:</span>
           <span>{defect.assigned_username || 'Не назначено'}</span>
-        </div>
+        </div>        {defect.deadline && (
+          <div>
+            <span>Срок выполнения:</span>
+            <span>{new Date(defect.deadline).toLocaleDateString('ru-RU')}</span>
+          </div>
+        )}
+      </div>
 
-        <div className="description-box">
-          <h3>Описание</h3>
-          <p>{defect.description || 'Описание отсутствует'}</p>
-        </div>
+      <div className="defect-detail-description">
+        <h3>Описание</h3>
+        <p>{defect.description || 'Описание отсутствует'}</p>
       </div>
 
       {/* Раздел комментариев */}

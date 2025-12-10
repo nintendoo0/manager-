@@ -36,8 +36,17 @@ function canCreateDefects(req, res, next) {
   next();
 }
 
+// Middleware для проверки прав на управление проектами (только admin и manager)
+function canManageProjects(req, res, next) {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+    return res.status(403).json({ message: 'Доступ запрещен. Только администраторы и менеджеры могут управлять проектами.' });
+  }
+  next();
+}
+
 module.exports = { 
   authenticateToken, 
   requireAdmin,
-  canCreateDefects
+  canCreateDefects,
+  canManageProjects
 };

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import apiClient from '../../utils/api'; // Добавляем импорт API-клиента
 import './Projects.css';
 
 const ProjectForm = ({ onSuccess }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -16,6 +18,13 @@ const ProjectForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const isEditMode = Boolean(id);
+
+  // Проверка прав доступа
+  useEffect(() => {
+    if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
+      navigate('/projects');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -37,16 +46,34 @@ const ProjectForm = ({ onSuccess }) => {
   };
 
   const { name, description, status, start_date, end_date } = formData;
-
   const handleChange = e => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const validateDates = () => {
+    if (start_date && end_date) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+      
+      if (endDate < startDate) {
+        setError('Дата окончания не может быть раньше даты начала проекта');
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
+    // Валидация дат
+    if (!validateDates()) {
+      setLoading(false);
+      return;
+    }
     
     try {
       if (isEditMode) {
@@ -57,7 +84,7 @@ const ProjectForm = ({ onSuccess }) => {
       navigate('/projects');
     } catch (err) {
       console.error('Ошибка создания проекта:', err);
-      setError(`Ошибка ${isEditMode ? 'обновления' : 'создания'} проекта`);
+      setError(err.response?.data?.message || `Ошибка ${isEditMode ? 'обновления' : 'создания'} проекта`);
     } finally {
       setLoading(false);
     }
@@ -105,10 +132,9 @@ const ProjectForm = ({ onSuccess }) => {
             <option value="completed">Завершен</option>
           </select>
         </div>
-        
-        <div className="form-row">
+          <div className="form-row">
           <div className="form-group">
-            <label htmlFor="start_date">Дата начала</label>
+            <label htmlFor="start_date">Дата начала *</label>
             <input
               type="date"
               id="start_date"
@@ -127,7 +153,13 @@ const ProjectForm = ({ onSuccess }) => {
               name="end_date"
               value={end_date}
               onChange={handleChange}
+              min={start_date} // Устанавливаем минимальную дату равной дате начала
             />
+            {start_date && end_date && new Date(end_date) < new Date(start_date) && (
+              <small style={{ color: '#e74c3c', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                ⚠️ Дата окончания не может быть раньше даты начала
+              </small>
+            )}
           </div>
         </div>
         

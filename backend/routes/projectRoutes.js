@@ -1,17 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/projectController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken, canManageProjects } = require('../middleware/authMiddleware');
 
-// Существующие маршруты
+// Просмотр проектов - доступен всем авторизованным пользователям
 router.get('/', authenticateToken, projectController.getAllProjects);
-router.post('/', authenticateToken, projectController.createProject); // защита создания
-
-// Добавляем маршрут для получения проекта по ID
 router.get('/:id', authenticateToken, projectController.getProjectById);
 
-// Добавляем маршруты для обновления и удаления проекта
-router.put('/:id', authenticateToken, projectController.updateProject);
-router.delete('/:id', authenticateToken, projectController.deleteProject);
+// Создание, редактирование и удаление проектов - только для admin и manager
+router.post('/', authenticateToken, canManageProjects, projectController.createProject);
+router.put('/:id', authenticateToken, canManageProjects, projectController.updateProject);
+router.delete('/:id', authenticateToken, canManageProjects, projectController.deleteProject);
 
 module.exports = router;

@@ -1,0 +1,378 @@
+.dashboard-container {
+  padding: 24px 0;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #2c3e50;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.export-buttons .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-export {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-export-stats {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.btn-export-stats:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
+/* Карточки статистики */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #3498db;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card.projects {
+  border-left-color: #3498db;
+}
+
+.stat-card.defects {
+  border-left-color: #e74c3c;
+}
+
+.stat-card.users {
+  border-left-color: #2ecc71;
+}
+
+.stat-card.overdue {
+  border-left-color: #f39c12;
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  font-size: 24px;
+}
+
+.stat-card.projects .stat-icon {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+.stat-card.defects .stat-icon {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.stat-card.users .stat-icon {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.stat-card.overdue .stat-icon {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.stat-card-content h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #7f8c8d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card-content .stat-value {
+  margin: 8px 0 0 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.stat-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.stat-detail-item {
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.stat-detail-item strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Графики и таблицы */
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Таблица топ проектов */
+.top-projects-table {
+  margin-top: 32px;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.top-projects-table h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.projects-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.projects-table th,
+.projects-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.projects-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.projects-table tr:hover {
+  background: #f8f9fa;
+}
+
+.projects-table td {
+  color: #34495e;
+  font-size: 14px;
+}
+
+/* Список недавних дефектов */
+.recent-defects {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 32px;
+}
+
+.recent-defects h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.defect-item {
+  padding: 16px;
+  border-left: 3px solid #3498db;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.defect-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.defect-item.priority-critical {
+  border-left-color: #e74c3c;
+}
+
+.defect-item.priority-high {
+  border-left-color: #f39c12;
+}
+
+.defect-item.priority-medium {
+  border-left-color: #3498db;
+}
+
+.defect-item.priority-low {
+  border-left-color: #95a5a6;
+}
+
+.defect-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.defect-item-title {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.defect-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.priority-critical {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+.badge.priority-high {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.badge.priority-medium {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+.badge.priority-low {
+  background: rgba(149, 165, 166, 0.1);
+  color: #95a5a6;
+}
+
+.badge.status-new {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+.badge.status-in_progress {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.badge.status-resolved {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.badge.status-closed {
+  background: rgba(149, 165, 166, 0.1);
+  color: #95a5a6;
+}
+
+.defect-item-meta {
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.loading, .error-message {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+}
+
+.error-message {
+  color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+  .dashboard-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .export-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .export-buttons .btn {
+    width: 100%;
+  }
+}

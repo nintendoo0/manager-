@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
+import { AuthContext } from '../../context/AuthContext';
 import './Projects.css';
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useContext(AuthContext);
+
+  // Проверка прав на управление проектами (только admin и manager)
+  const canManageProjects = user && (user.role === 'admin' || user.role === 'manager');
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -43,13 +48,14 @@ const ProjectList = () => {
   }, []);
 
   return (
-    <div className="page-container">
-      <div className="project-list-container">
+    <div className="page-container">      <div className="project-list-container">
         <div className="project-header">
           <h2>Проекты</h2>
-          <Link to="/projects/new" className="btn btn-primary">
-            <i className="fas fa-plus"></i> Новый проект
-          </Link>
+          {canManageProjects && (
+            <Link to="/projects/new" className="btn btn-primary">
+              <i className="fas fa-plus"></i> Новый проект
+            </Link>
+          )}
         </div>
 
         {loading ? (

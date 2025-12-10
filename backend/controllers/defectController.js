@@ -109,7 +109,7 @@ exports.getDefectsByProjectId = async (req, res) => {
 // Создание нового дефекта
 exports.createDefect = async (req, res) => {
   try {
-    const { title, description, status, priority, project_id, assigned_to } = req.body;
+    const { title, description, status, priority, project_id, assigned_to, deadline } = req.body;
     const created_by = req.user?.id; // Получаем ID текущего пользователя
     
     // Проверка обязательных полей
@@ -117,11 +117,24 @@ exports.createDefect = async (req, res) => {
       return res.status(400).json({ message: 'Заголовок и ID проекта обязательны' });
     }
     
+    // Валидация срока исполнения
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Сбрасываем время для корректного сравнения
+      
+      if (deadlineDate < today) {
+        return res.status(400).json({ 
+          message: 'Срок исполнения не может быть раньше текущей даты' 
+        });
+      }
+    }
+    
     const result = await db.query(`
-      INSERT INTO defects (title, description, status, priority, project_id, assigned_to, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO defects (title, description, status, priority, project_id, assigned_to, created_by, deadline)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
-    `, [title, description, status || 'open', priority || 'medium', project_id, assigned_to, created_by]);
+    `, [title, description, status || 'new', priority || 'medium', project_id, assigned_to, created_by, deadline || null]);
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -136,10 +149,14 @@ exports.getDefectById = async (req, res) => {
     const { id } = req.params;
     
     const result = await db.query(`
-      SELECT d.*, p.name as project_name, u.username as assigned_to_name
+      SELECT d.*, 
+        p.name as project_name,
+        u1.username as created_username,
+        u2.username as assigned_username
       FROM defects d
       LEFT JOIN projects p ON d.project_id = p.id
-      LEFT JOIN users u ON d.assigned_to = u.id
+      LEFT JOIN users u1 ON d.created_by = u1.id
+      LEFT JOIN users u2 ON d.assigned_to = u2.id
       WHERE d.id = $1
     `, [id]);
     
@@ -232,7 +249,7 @@ exports.getDefect = async (req, res) => {
 exports.updateDefect = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, status, priority, project_id, assigned_to } = req.body;
+    const { title, description, status, priority, project_id, assigned_to, deadline } = req.body;
     const userRole = req.user.role;
     
     // Проверка доступа: только менеджеры и администраторы могут обновлять дефекты
@@ -244,6 +261,19 @@ exports.updateDefect = async (req, res) => {
       return res.status(400).json({ message: 'Заголовок обязателен' });
     }
     
+    // Валидация срока исполнения
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (deadlineDate < today) {
+        return res.status(400).json({ 
+          message: 'Срок исполнения не может быть раньше текущей даты' 
+        });
+      }
+    }
+    
     const result = await db.query(`
       UPDATE defects 
       SET title = $1, 
@@ -252,10 +282,11 @@ exports.updateDefect = async (req, res) => {
           priority = $4, 
           project_id = $5, 
           assigned_to = $6,
+          deadline = $7,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $7
+      WHERE id = $8
       RETURNING *
-    `, [title, description, status, priority, project_id, assigned_to || null, id]);
+    `, [title, description, status, priority, project_id, assigned_to || null, deadline || null, id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Дефект не найден' });
