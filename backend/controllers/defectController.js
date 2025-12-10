@@ -38,7 +38,12 @@ const upload = multer({
 // Получение всех дефектов с возможностью фильтрации
 exports.getAllDefects = async (req, res) => {
   try {
-    const { project_id, status, priority, assigned_to } = req.query;
+    const { project_id, status, priority, assigned_to, page, limit } = req.query;
+    
+    // Параметры пагинации
+    const currentPage = parseInt(page) || 1;
+    const itemsPerPage = parseInt(limit) || 10;
+    const offset = (currentPage - 1) * itemsPerPage;
     
     let query = `
       SELECT d.*, p.name as project_name, 
@@ -73,13 +78,44 @@ exports.getAllDefects = async (req, res) => {
       query += ` AND d.assigned_to = $${params.length}`;
     }
     
+    // Получаем общее количество для пагинации
+    const countQuery = `
+      SELECT COUNT(*) FROM defects d
+      WHERE 1=1
+      ${project_id ? ` AND d.project_id = $1` : ''}
+      ${status ? ` AND d.status = $${project_id ? 2 : 1}` : ''}
+      ${priority ? ` AND d.priority = $${params.length}` : ''}
+      ${assigned_to ? ` AND d.assigned_to = $${params.length}` : ''}
+    `;
+    const countResult = await db.query(countQuery, params);
+    const totalItems = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
     query += ' ORDER BY d.created_at DESC';
+    
+    // Добавляем LIMIT и OFFSET
+    params.push(itemsPerPage);
+    query += ` LIMIT $${params.length}`;
+    params.push(offset);
+    query += ` OFFSET $${params.length}`;
     
     console.log('SQL запрос:', query);
     console.log('Параметры:', params);
     
     const result = await db.query(query, params);
-    res.status(200).json(result.rows);
+    
+    // Отправляем ответ с метаданными пагинации
+    res.status(200).json({
+      data: result.rows,
+      pagination: {
+        currentPage: currentPage,
+        totalPages: totalPages,
+        totalItems: totalItems,
+        itemsPerPage: itemsPerPage,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1
+      }
+    });
   } catch (error) {
     console.error('Ошибка при получении дефектов:', error);
     res.status(500).json({ message: 'Ошибка при получении дефектов', error: error.message });

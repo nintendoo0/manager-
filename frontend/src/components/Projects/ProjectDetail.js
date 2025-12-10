@@ -15,7 +15,6 @@ const ProjectDetail = () => {
 
   // Проверка прав на управление проектами (только admin и manager)
   const canManageProjects = user && (user.role === 'admin' || user.role === 'manager');
-
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
@@ -25,9 +24,18 @@ const ProjectDetail = () => {
         const projectResponse = await apiClient.get(`/projects/${id}`);
         setProject(projectResponse.data);
         
-        // Получаем связанные дефекты
-        const defectsResponse = await apiClient.get(`/defects?project_id=${id}`);
-        setDefects(defectsResponse.data);
+        // Получаем связанные дефекты (без пагинации - все дефекты проекта)
+        const defectsResponse = await apiClient.get(`/defects?project_id=${id}&limit=1000`);
+        
+        // Обрабатываем новый формат ответа с пагинацией
+        if (defectsResponse.data && defectsResponse.data.data) {
+          setDefects(defectsResponse.data.data);
+        } else if (Array.isArray(defectsResponse.data)) {
+          // Обратная совместимость со старым форматом
+          setDefects(defectsResponse.data);
+        } else {
+          setDefects([]);
+        }
         
         setError(null);
       } catch (err) {

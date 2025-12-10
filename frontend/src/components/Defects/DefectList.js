@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
+import Pagination from '../UI/Pagination';
 import './Defects.css';
 
 const DefectList = () => {
@@ -16,6 +17,16 @@ const DefectList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Состояния для пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState({
+    totalPages: 0,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  
   // Фильтры
   const [filters, setFilters] = useState({
     status: '',
@@ -25,51 +36,71 @@ const DefectList = () => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+    fetchData();
+  }, [projectId, filters.status, filters.priority, filters.project_id, currentPage, itemsPerPage]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Если показываем дефекты конкретного проекта
+      if (projectId) {
+        // Получаем информацию о проекте
+        const projectRes = await api.get(`/projects/${projectId}`);
+        setCurrentProject(projectRes.data);
         
-        // Если показываем дефекты конкретного проекта
-        if (projectId) {
-          // Получаем информацию о проекте
-          const projectRes = await api.get(`/projects/${projectId}`);
-          setCurrentProject(projectRes.data);
-          
-          // Получаем дефекты только этого проекта
-          const defectsRes = await api.get(`/defects?project_id=${projectId}`);
-          setDefects(Array.isArray(defectsRes.data) ? defectsRes.data : []);
-        } else {
-          // Загружаем список всех проектов для фильтрации
-          const projectsRes = await api.get('/projects');
-          setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
-          
-          // Формируем параметры запроса с учетом фильтров
-          const queryParams = new URLSearchParams();
-          if (filters.status) queryParams.append('status', filters.status);
-          if (filters.priority) queryParams.append('priority', filters.priority);
-          if (filters.project_id) queryParams.append('project_id', filters.project_id);
-          
-          // Получаем все дефекты с фильтрами
-          const defectsRes = await api.get(`/defects?${queryParams.toString()}`);
-          setDefects(Array.isArray(defectsRes.data) ? defectsRes.data : []);
+        // Получаем дефекты только этого проекта с пагинацией
+        const defectsRes = await api.get(`/defects?project_id=${projectId}&page=${currentPage}&limit=${itemsPerPage}`);
+        
+        if (defectsRes.data && defectsRes.data.data) {
+          setDefects(defectsRes.data.data);
+          setPagination(defectsRes.data.pagination);
+        } else if (Array.isArray(defectsRes.data)) {
+          setDefects(defectsRes.data);
+        }
+      } else {
+        // Загружаем список всех проектов для фильтрации
+        const projectsRes = await api.get('/projects');
+        
+        if (projectsRes.data && projectsRes.data.data) {
+          setProjects(projectsRes.data.data);
+        } else if (Array.isArray(projectsRes.data)) {
+          setProjects(projectsRes.data);
         }
         
-        setError(null);
-      } catch (err) {
-        console.error('Ошибка при загрузке данных:', err);
-        setError('Не удалось загрузить дефекты. Пожалуйста, попробуйте позже.');
-        setDefects([]);
-      } finally {
-        setLoading(false);
+        // Формируем параметры запроса с учетом фильтров и пагинации
+        const queryParams = new URLSearchParams();
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.priority) queryParams.append('priority', filters.priority);
+        if (filters.project_id) queryParams.append('project_id', filters.project_id);
+        queryParams.append('page', currentPage);
+        queryParams.append('limit', itemsPerPage);
+        
+        // Получаем все дефекты с фильтрами и пагинацией
+        const defectsRes = await api.get(`/defects?${queryParams.toString()}`);
+        
+        if (defectsRes.data && defectsRes.data.data) {
+          setDefects(defectsRes.data.data);
+          setPagination(defectsRes.data.pagination);
+        } else if (Array.isArray(defectsRes.data)) {
+          setDefects(defectsRes.data);
+        }
       }
-    };
-
-    fetchData();
-  }, [projectId, filters.status, filters.priority, filters.project_id]);
+      
+      setError(null);
+    } catch (err) {
+      console.error('Ошибка при загрузке данных:', err);
+      setError('Не удалось загрузить дефекты. Пожалуйста, попробуйте позже.');
+      setDefects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+    setCurrentPage(1); // Сбрасываем на первую страницу при изменении фильтра
   };
 
   const resetFilters = () => {
@@ -79,6 +110,16 @@ const DefectList = () => {
       project_id: projectId || '',
       search: '',
     });
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page, newItemsPerPage) => {
+    if (newItemsPerPage && newItemsPerPage !== itemsPerPage) {
+      setItemsPerPage(newItemsPerPage);
+      setCurrentPage(1);
+    } else {
+      setCurrentPage(page);
+    }
   };
 
   // право на экспорт: только admin или manager
@@ -303,11 +344,21 @@ const DefectList = () => {
                 </div>
                 <Link to={`/defects/${defect.id}`} className="btn btn-info btn-sm">
                   Подробнее
-                </Link>
-              </div>
+                </Link>              </div>
             </div>
           ))}
         </div>
+      )}
+      
+      {/* Компонент пагинации */}
+      {!loading && !error && defects.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

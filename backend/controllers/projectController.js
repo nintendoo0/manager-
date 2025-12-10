@@ -65,8 +65,34 @@ exports.createProject = async (req, res) => {
 // Получение всех проектов
 exports.getAllProjects = async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM projects ORDER BY created_at DESC');
-    res.status(200).json(result.rows);
+    // Параметры пагинации
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Получаем общее количество проектов
+    const countResult = await db.query('SELECT COUNT(*) FROM projects');
+    const totalItems = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Получаем проекты с пагинацией
+    const result = await db.query(
+      'SELECT * FROM projects ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+
+    // Отправляем ответ с метаданными пагинации
+    res.status(200).json({
+      data: result.rows,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalItems: totalItems,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
     console.error('Ошибка при получении проектов:', error);
     res.status(500).json({ message: 'Ошибка сервера при получении проектов' });

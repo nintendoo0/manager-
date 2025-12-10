@@ -13,12 +13,20 @@ const PendingApprovals = () => {
   useEffect(() => {
     fetchPendingApprovals();
   }, []);
-
   const fetchPendingApprovals = async () => {
     try {
       setLoading(true);
       const response = await api.get('/defects/pending-approvals');
-      setDefects(Array.isArray(response.data) ? response.data : []);
+      
+      // Обработка разных форматов ответа
+      if (response.data && response.data.data) {
+        setDefects(Array.isArray(response.data.data) ? response.data.data : []);
+      } else if (Array.isArray(response.data)) {
+        setDefects(response.data);
+      } else {
+        setDefects([]);
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Ошибка при загрузке ожидающих подтверждения:', err);

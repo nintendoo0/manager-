@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
+import Pagination from '../UI/Pagination';
 import './Projects.css';
 
 const ProjectList = () => {
@@ -10,42 +11,58 @@ const ProjectList = () => {
   const [error, setError] = useState(null);
   const { user } = useContext(AuthContext);
 
+  // Состояния для пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState({
+    totalPages: 0,
+    totalItems: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   // Проверка прав на управление проектами (только admin и manager)
   const canManageProjects = user && (user.role === 'admin' || user.role === 'manager');
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get('/projects');
-        
-        // Проверяем формат ответа и выбираем правильные данные
-        if (Array.isArray(res.data)) {
-          setProjects(res.data);
-        } else if (res.data && Array.isArray(res.data.projects)) {
-          setProjects(res.data.projects);
-        } else if (res.data && typeof res.data === 'object') {
-          // Если пришёл объект, преобразуем в массив для отображения
-          console.log("Получены данные:", res.data);
-          setProjects([]);  // Временно установим пустой массив
-        } else {
-          // Если формат данных совсем не тот, который ожидаем
-          console.error("Неожиданный формат данных:", res.data);
-          setProjects([]);
-        }
-        
-        setError(null);
-      } catch (err) {
-        console.error('Ошибка загрузки проектов:', err);
-        setError('Не удалось загрузить проекты. Пожалуйста, попробуйте позже.');
-        setProjects([]);  // Устанавливаем пустой массив при ошибке
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProjects();
-  }, []);
+  }, [currentPage, itemsPerPage]);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/projects?page=${currentPage}&limit=${itemsPerPage}`);
+      
+      // Обрабатываем новый формат ответа с пагинацией
+      if (res.data && res.data.data) {
+        setProjects(res.data.data);
+        setPagination(res.data.pagination);
+      } else if (Array.isArray(res.data)) {
+        // Обратная совместимость со старым форматом
+        setProjects(res.data);
+      } else {
+        console.error("Неожиданный формат данных:", res.data);
+        setProjects([]);
+      }
+      
+      setError(null);
+    } catch (err) {
+      console.error('Ошибка загрузки проектов:', err);
+      setError('Не удалось загрузить проекты. Пожалуйста, попробуйте позже.');
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page, newItemsPerPage) => {
+    if (newItemsPerPage && newItemsPerPage !== itemsPerPage) {
+      setItemsPerPage(newItemsPerPage);
+      setCurrentPage(1); // Сбрасываем на первую страницу при изменении количества
+    } else {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="page-container">      <div className="project-list-container">
@@ -102,6 +119,17 @@ const ProjectList = () => {
               </div>
             ))}
           </div>
+        )}
+        
+        {/* Компонент пагинации */}
+        {!loading && !error && projects.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
     </div>
