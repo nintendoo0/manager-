@@ -131,18 +131,17 @@ describe('Integration Tests - Complete Workflow', () => {
       expect(res.body.title).toBe('Критическая трещина в стене');
       expect(res.body.status).toBe('new');
       defectId = res.body.id;
-    });
-
-    it('Шаг 6: Инженер просматривает список дефектов проекта', async () => {
+    });    it('Шаг 6: Инженер просматривает список дефектов проекта', async () => {
       const res = await request(app)
         .get(`/api/defects?project_id=${projectId}`)
         .set('Authorization', `Bearer ${engineerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
-      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
+      expect(res.body.data.length).toBeGreaterThan(0);
       
-      const defect = res.body.find(d => d.id === defectId);
+      const defect = res.body.data.find(d => d.id === defectId);
       expect(defect).toBeDefined();
       expect(defect.title).toBe('Критическая трещина в стене');
     });
@@ -180,9 +179,7 @@ describe('Integration Tests - Complete Workflow', () => {
         });
 
       expect(res.statusCode).toBe(201);
-    });
-
-    it('Шаг 10: Проверяем, что все комментарии сохранены', async () => {
+    });    it('Шаг 10: Проверяем, что все комментарии сохранены', async () => {
       const res = await request(app)
         .get(`/api/defects/${defectId}/comments`)
         .set('Authorization', `Bearer ${adminToken}`);

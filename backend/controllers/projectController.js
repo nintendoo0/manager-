@@ -140,10 +140,26 @@ exports.updateProject = async (req, res) => {
     const { id } = req.params;
     const { name, description, status, start_date, end_date } = req.body;
     
+    // Получаем текущий проект для сохранения существующих значений
+    const currentProject = await db.query('SELECT * FROM projects WHERE id = $1', [id]);
+    
+    if (currentProject.rows.length === 0) {
+      return res.status(404).json({ message: 'Проект не найден' });
+    }
+    
+    const current = currentProject.rows[0];
+    
+    // Используем существующие значения, если новые не предоставлены
+    const updatedName = name !== undefined ? name : current.name;
+    const updatedDescription = description !== undefined ? description : current.description;
+    const updatedStatus = status !== undefined ? status : current.status;
+    const updatedStartDate = start_date !== undefined ? start_date : current.start_date;
+    const updatedEndDate = end_date !== undefined ? end_date : current.end_date;
+    
     // Валидация дат
-    if (start_date && end_date) {
-      const startDate = new Date(start_date);
-      const endDate = new Date(end_date);
+    if (updatedStartDate && updatedEndDate) {
+      const startDate = new Date(updatedStartDate);
+      const endDate = new Date(updatedEndDate);
       
       if (endDate < startDate) {
         return res.status(400).json({ 
@@ -153,7 +169,7 @@ exports.updateProject = async (req, res) => {
     }
     
     // Проверка обязательных полей
-    if (!name || !name.trim()) {
+    if (!updatedName || !updatedName.trim()) {
       return res.status(400).json({ message: 'Название проекта обязательно' });
     }
     
@@ -162,12 +178,8 @@ exports.updateProject = async (req, res) => {
        SET name = $1, description = $2, status = $3, start_date = $4, end_date = $5 
        WHERE id = $6 
        RETURNING *`,
-      [name, description, status, start_date, end_date, id]
+      [updatedName, updatedDescription, updatedStatus, updatedStartDate, updatedEndDate, id]
     );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Проект не найден' });
-    }
     
     res.status(200).json(result.rows[0]);
   } catch (error) {

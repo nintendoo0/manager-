@@ -67,30 +67,6 @@ if (response.data && response.data.data) {
 }
 ```
 
-### 3. DefectForm.js
-
-Исправлена загрузка списка проектов:
-
-**Было:**
-```javascript
-const projectsResponse = await apiClient.get('/projects');
-setProjects(projectsResponse.data || []);
-```
-
-**Стало:**
-```javascript
-const projectsResponse = await apiClient.get('/projects?limit=1000');
-
-// Обработка нового формата API с пагинацией
-if (projectsResponse.data && projectsResponse.data.data) {
-  setProjects(projectsResponse.data.data);
-} else if (Array.isArray(projectsResponse.data)) {
-  setProjects(projectsResponse.data);
-} else {
-  setProjects([]);
-}
-```
-
 ## Особенности реализации
 
 1. **Обратная совместимость:** Код поддерживает оба формата ответа (старый и новый)
@@ -101,7 +77,6 @@ if (projectsResponse.data && projectsResponse.data.data) {
 
 - ✅ `frontend/src/components/Projects/ProjectDetail.js`
 - ✅ `frontend/src/components/Defects/PendingApprovals.js`
-- ✅ `frontend/src/components/Defects/DefectForm.js`
 
 ## Результат
 

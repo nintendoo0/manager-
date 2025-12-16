@@ -293,3 +293,7 @@ npm test -- tests/unit/simplified.unit.test.js --forceExit
 
 **Последнее обновление:** 14 октября 2025 г.  
 **Версия:** 1.0
+
+
+
+cd c:\manager-\backend; npm test -- tests/unit/ 2>&1 | Select-String -Pattern "(Test Suites:|Tests:)" -Context 0,0

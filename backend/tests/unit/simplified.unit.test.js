@@ -149,15 +149,15 @@ describe('Упрощенные юнит-тесты', () => {
       expect(res.body).toHaveProperty('name');
       
       testProjectId = res.body.id;
-    });
-
-    it('✅ Получение списка проектов должно быть успешным', async () => {
+    });    it('✅ Получение списка проектов должно быть успешным', async () => {
       const res = await request(app)
         .get('/api/projects')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(res.body).toHaveProperty('pagination');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('✅ Получение проекта по ID должно быть успешным', async () => {
@@ -209,15 +209,15 @@ describe('Упрощенные юнит-тесты', () => {
       expect(res.body).toHaveProperty('title');
       
       testDefectId = res.body.id;
-    });
-
-    it('✅ Получение списка дефектов должно быть успешным', async () => {
+    });    it('✅ Получение списка дефектов должно быть успешным', async () => {
       const res = await request(app)
         .get('/api/defects')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(res.body).toHaveProperty('pagination');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('✅ Получение дефекта по ID должно быть успешным', async () => {
@@ -227,15 +227,14 @@ describe('Упрощенные юнит-тесты', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('id', testDefectId);
-    });
-
-    it('✅ Фильтрация дефектов по проекту должна работать', async () => {
+    });    it('✅ Фильтрация дефектов по проекту должна работать', async () => {
       const res = await request(app)
         .get(`/api/defects?project_id=${testProjectId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('✅ Обновление дефекта должно быть успешным', async () => {

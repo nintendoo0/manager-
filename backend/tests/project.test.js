@@ -35,15 +35,16 @@ describe('Project API', () => {
     
     projectId = res.body.id;
   });
-  
-  it('should get all projects', async () => {
+    it('should get all projects', async () => {
     const res = await request(app)
       .get('/api/projects')
       .set('Authorization', `Bearer ${token}`);
     
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body)).toBeTruthy();
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body).toHaveProperty('pagination');
+    expect(Array.isArray(res.body.data)).toBeTruthy();
+    expect(res.body.data.length).toBeGreaterThan(0);
   });
   
   it('should get a project by id', async () => {

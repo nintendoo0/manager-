@@ -92,9 +92,7 @@ describe('User Stories Validation', () => {
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('id');
       expect(res.body.role).toBe('engineer');
-    });
-
-    it('должен позволить администратору просмотреть список пользователей', async () => {
+    });    it('должен позволить администратору просмотреть список пользователей', async () => {
       const res = await request(app)
         .get('/api/auth/users')
         .set('Authorization', `Bearer ${adminToken}`);
@@ -140,15 +138,14 @@ describe('User Stories Validation', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body.description).toBe('Updated by manager');
-    });
-
-    it('должен позволить менеджеру просматривать все проекты', async () => {
+    });    it('должен позволить менеджеру просматривать все проекты', async () => {
       const res = await request(app)
         .get('/api/projects')
         .set('Authorization', `Bearer ${managerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('НЕ должен позволить наблюдателю создавать проекты', async () => {
@@ -216,7 +213,6 @@ describe('User Stories Validation', () => {
       expect(res.statusCode).toBe(201);
     });
   });
-
   describe('US-4: Как инженер, я хочу просматривать назначенные мне дефекты', () => {
     it('должен позволить инженеру просматривать все дефекты', async () => {
       const res = await request(app)
@@ -224,7 +220,8 @@ describe('User Stories Validation', () => {
         .set('Authorization', `Bearer ${engineerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('должен позволить инженеру просматривать дефекты конкретного проекта', async () => {
@@ -233,7 +230,8 @@ describe('User Stories Validation', () => {
         .set('Authorization', `Bearer ${engineerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('должен позволить инженеру просмотреть детали дефекта', async () => {
@@ -345,16 +343,15 @@ describe('User Stories Validation', () => {
           priority: 'medium',
           status: 'closed'
         });
-    });
-
-    it('должен позволить фильтровать дефекты по статусу', async () => {
+    });    it('должен позволить фильтровать дефекты по статусу', async () => {
       const res = await request(app)
         .get('/api/defects?status=resolved')
         .set('Authorization', `Bearer ${managerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
-      res.body.forEach(defect => {
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
+      res.body.data.forEach(defect => {
         expect(defect.status).toBe('resolved');
       });
     });
@@ -365,8 +362,9 @@ describe('User Stories Validation', () => {
         .set('Authorization', `Bearer ${managerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
-      res.body.forEach(defect => {
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
+      res.body.data.forEach(defect => {
         expect(defect.priority).toBe('low');
       });
     });
@@ -377,8 +375,9 @@ describe('User Stories Validation', () => {
         .set('Authorization', `Bearer ${managerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
-      res.body.forEach(defect => {
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
+      res.body.data.forEach(defect => {
         expect(defect.project_id).toBe(projectId);
       });
     });
@@ -412,7 +411,6 @@ describe('User Stories Validation', () => {
       expect(res.statusCode).toBe(403);
     });
   });
-
   describe('US-9: Как наблюдатель, я хочу просматривать информацию в режиме "только чтение"', () => {
     it('должен позволить наблюдателю просматривать проекты', async () => {
       const res = await request(app)
@@ -420,7 +418,8 @@ describe('User Stories Validation', () => {
         .set('Authorization', `Bearer ${observerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('должен позволить наблюдателю просматривать дефекты', async () => {
@@ -429,7 +428,8 @@ describe('User Stories Validation', () => {
         .set('Authorization', `Bearer ${observerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('должен позволить наблюдателю просматривать детали дефекта', async () => {

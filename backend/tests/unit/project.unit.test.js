@@ -137,7 +137,6 @@ describe('Unit Tests - Project Controller', () => {
       expect(res.statusCode).toBe(400);
     });
   });
-
   describe('GET /api/projects', () => {
     it('должен вернуть список всех проектов', async () => {
       const res = await request(app)
@@ -145,8 +144,13 @@ describe('Unit Tests - Project Controller', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
-      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body).toHaveProperty('data');
+      expect(res.body).toHaveProperty('pagination');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
+      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.body.pagination).toHaveProperty('currentPage');
+      expect(res.body.pagination).toHaveProperty('totalPages');
+      expect(res.body.pagination).toHaveProperty('totalItems');
     });
 
     it('должен вернуть проекты для менеджера', async () => {
@@ -155,7 +159,9 @@ describe('Unit Tests - Project Controller', () => {
         .set('Authorization', `Bearer ${managerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(res.body).toHaveProperty('pagination');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
 
     it('должен вернуть проекты для инженера', async () => {
@@ -164,7 +170,9 @@ describe('Unit Tests - Project Controller', () => {
         .set('Authorization', `Bearer ${engineerToken}`);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBeTruthy();
+      expect(res.body).toHaveProperty('data');
+      expect(res.body).toHaveProperty('pagination');
+      expect(Array.isArray(res.body.data)).toBeTruthy();
     });
   });
 
