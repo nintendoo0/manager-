@@ -26,15 +26,23 @@ const DefectForm = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
         
-        // Загрузка проектов
-        const projectsResponse = await apiClient.get('/projects');
-        setProjects(projectsResponse.data || []);
+        // Загрузка проектов (с большим лимитом, чтобы получить все проекты)
+        const projectsResponse = await apiClient.get('/projects?limit=1000');
+        
+        // Обработка нового формата API с пагинацией
+        if (projectsResponse.data && projectsResponse.data.data) {
+          setProjects(projectsResponse.data.data);
+        } else if (Array.isArray(projectsResponse.data)) {
+          // Обратная совместимость со старым форматом
+          setProjects(projectsResponse.data);
+        } else {
+          setProjects([]);
+        }
         
         // Загрузка пользователей только для admin и manager
         if (user && (user.role === 'admin' || user.role === 'manager')) {
